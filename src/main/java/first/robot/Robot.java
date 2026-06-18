@@ -20,7 +20,6 @@ import com.revrobotics.spark.A301;
 public class Robot extends OpModeRobot {
 
   public final A301 motor1 = new A301(CANBusMap.CAN_D0);
-  public final A301 motor2 = new A301(CANBusMap.CAN_D0);
   public final Gamepad gamepad = new Gamepad(0);
 
   /**

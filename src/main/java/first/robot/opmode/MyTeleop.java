@@ -26,6 +26,8 @@ public class MyTeleop extends PeriodicOpMode {
 
   @Override
   public void start() {
+    throttle = 0;
+    robot.motor1.setThrottle(throttle);
     /* Called once when the robot is enabled. */
   }
 
@@ -34,9 +36,11 @@ public class MyTeleop extends PeriodicOpMode {
     if (robot.gamepad.getDpadUpButtonPressed()) {
       throttle += 0.1;
       robot.motor1.setThrottle(throttle);
+      System.out.println(String.format("Throttle up to %f", throttle));
     } else if (robot.gamepad.getDpadDownButtonPressed()) {
       throttle -= 0.1;
       robot.motor1.setThrottle(throttle);
+      System.out.println(String.format("Throttle down to %f", throttle));
     }
   }
 
