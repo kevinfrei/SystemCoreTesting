@@ -1,16 +1,16 @@
 package com.pedropathing.ftc.localization.constants;
 
+import org.wpilib.hardware.imu.OnboardIMU;
+
 import com.pedropathing.ftc.localization.CustomIMU;
-import com.pedropathing.ftc.localization.Encoder;
-import com.pedropathing.ftc.localization.RevHubIMU;
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import com.pedropathing.ftc.localization.SystemCoreEncoder;
+import com.pedropathing.ftc.localization.SystemCoreIMU;
 
 /**
  * This is the ThreeWheelIMUConstants class. It holds many constants and parameters for the Three Wheel + IMU Localizer.
  * @author Baron Henderson - 20077 The Indubitables
  * @version 1.0, 12/24/2024
  */
-
 
 public class ThreeWheelIMUConstants {
 
@@ -38,42 +38,29 @@ public class ThreeWheelIMUConstants {
      * Default Value: -2.5 */
     public double strafePodX = -2.5;
 
-    /** The Hardware Map Name of the IMU (built-in IMU will be Port 0, "imu")
-     * Default Value: "imu" */
-    public String IMU_HardwareMapName = "imu";
-
-    /** The name of the Left Encoder in the hardware map (name of the motor port it is plugged into)
-     * Default Value: "leftFront" */
-    public String leftEncoder_HardwareMapName = "leftFront";
-
-    /** The name of the Right Encoder in the hardware map (name of the motor port it is plugged into)
-     * Default Value: "rightRear" */
-    public String rightEncoder_HardwareMapName = "rightRear";
-
-    /** The name of the Strafe Encoder in the hardware map (name of the motor port it is plugged into)
-     * Default Value:Default Value: "rightFront" */
-    public String strafeEncoder_HardwareMapName = "rightFront";
-
     /** The Orientation of the Control Hub (for IMU) on the Robot
-     * Default Value: new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.LEFT) */
-    public RevHubOrientationOnRobot IMU_Orientation = new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.LEFT);
+     * TODO:KBF this doesn't support 'reversed' mounting, which is an issue for FTC
+     * cuz students regularly mount stuff in weird orientations because 18"^3 is a
+     * fun design challenge :)
+     *  */
+    public OnboardIMU.MountOrientation IMU_Orientation =  OnboardIMU.MountOrientation.FLAT;
 
     /** The direction of the Left Encoder
      * Default Value: Encoder.REVERSE */
-    public double leftEncoderDirection = Encoder.REVERSE;
+    public double leftEncoderDirection = SystemCoreEncoder.REVERSE;
 
     /** The direction of the Right Encoder
      * Default Value: Encoder.FORWARD */
-    public double rightEncoderDirection = Encoder.REVERSE;
+    public double rightEncoderDirection = SystemCoreEncoder.REVERSE;
 
     /** The direction of the Strafe Encoder
      * Default Value: Encoder.FORWARD */
-    public double strafeEncoderDirection = Encoder.FORWARD;
+    public double strafeEncoderDirection = SystemCoreEncoder.FORWARD;
 
     /**
      * This is the IMU that will be used for localization.
      */
-    public CustomIMU imu = new RevHubIMU();
+    public CustomIMU imu = new SystemCoreIMU();
 
     /**
      * This creates a new ThreeWheelIMUConstants with default values.
@@ -112,27 +99,7 @@ public class ThreeWheelIMUConstants {
         return this;
     }
 
-    public ThreeWheelIMUConstants IMU_HardwareMapName(String IMU_HardwareMapName) {
-        this.IMU_HardwareMapName = IMU_HardwareMapName;
-        return this;
-    }
-
-    public ThreeWheelIMUConstants leftEncoder_HardwareMapName(String leftEncoder_HardwareMapName) {
-        this.leftEncoder_HardwareMapName = leftEncoder_HardwareMapName;
-        return this;
-    }
-
-    public ThreeWheelIMUConstants rightEncoder_HardwareMapName(String rightEncoder_HardwareMapName) {
-        this.rightEncoder_HardwareMapName = rightEncoder_HardwareMapName;
-        return this;
-    }
-
-    public ThreeWheelIMUConstants strafeEncoder_HardwareMapName(String strafeEncoder_HardwareMapName) {
-        this.strafeEncoder_HardwareMapName = strafeEncoder_HardwareMapName;
-        return this;
-    }
-
-    public ThreeWheelIMUConstants IMU_Orientation(RevHubOrientationOnRobot IMU_Orientation) {
+    public ThreeWheelIMUConstants IMU_Orientation(OnboardIMU.MountOrientation IMU_Orientation) {
         this.IMU_Orientation = IMU_Orientation;
         return this;
     }
@@ -164,14 +131,11 @@ public class ThreeWheelIMUConstants {
         leftPodY = 1;
         rightPodY = -1;
         strafePodX = -2.5;
-        IMU_HardwareMapName = "imu";
-        leftEncoder_HardwareMapName = "leftFront";
-        rightEncoder_HardwareMapName = "rightRear";
-        strafeEncoder_HardwareMapName = "rightFront";
-        IMU_Orientation = new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.LEFT);
-        leftEncoderDirection = Encoder.REVERSE;
-        rightEncoderDirection = Encoder.REVERSE;
-        strafeEncoderDirection = Encoder.FORWARD;
-        imu = new RevHubIMU();
+        IMU_Orientation = OnboardIMU.MountOrientation.FLAT;
+        leftEncoderDirection = SystemCoreEncoder.REVERSE;
+        rightEncoderDirection = SystemCoreEncoder.REVERSE;
+        strafeEncoderDirection = SystemCoreEncoder.FORWARD;
+        // TODO:KBF Need to factor this out somehow
+        imu = new SystemCoreIMU();
     }
 }

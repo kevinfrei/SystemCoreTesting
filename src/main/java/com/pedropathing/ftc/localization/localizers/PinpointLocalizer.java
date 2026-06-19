@@ -1,3 +1,5 @@
+/* TODO:KBF Port this (once I have a Pinpoint driver going)
+
 package com.pedropathing.ftc.localization.localizers;
 
 import android.annotation.SuppressLint;
@@ -28,7 +30,7 @@ import java.util.Objects;
  * @author Havish Sripada 12808 - RevAmped Robotics
  * @author Ethan Doak - GoBilda
  * @version 2.0, 6/30/2025
- */
+ * //
 public class PinpointLocalizer implements Localizer {
     private final GoBildaPinpointDriver odo;
     private final PinpointConstants constants;
@@ -43,7 +45,7 @@ public class PinpointLocalizer implements Localizer {
      * facing 0 heading.
      *
      * @param map the HardwareMap
-     */
+     * //
     public PinpointLocalizer(HardwareMap map, PinpointConstants constants){ this(map, constants, new Pose());}
 
     /**
@@ -52,7 +54,7 @@ public class PinpointLocalizer implements Localizer {
      *
      * @param map the HardwareMap
      * @param setStartPose the Pose to start from
-     */
+     * //
     @SuppressLint("NewApi")
     public PinpointLocalizer(HardwareMap map, PinpointConstants constants, Pose setStartPose){
 
@@ -83,7 +85,7 @@ public class PinpointLocalizer implements Localizer {
      * This returns the current pose estimate.
      *
      * @return returns the current pose estimate as a Pose
-     */
+     * //
     @Override
     public Pose getPose() {
         return pinpointPose;
@@ -93,7 +95,7 @@ public class PinpointLocalizer implements Localizer {
      * This returns the current velocity estimate.
      *
      * @return returns the current velocity estimate as a Pose
-     */
+     * //
     @Override
     public Pose getVelocity() {
         return currentVelocity;
@@ -103,7 +105,7 @@ public class PinpointLocalizer implements Localizer {
      * This returns the current velocity estimate.
      *
      * @return returns the current velocity estimate as a Vector
-     */
+     * //
     @Override
     public Vector getVelocityVector() {
         return currentVelocity.getAsVector();
@@ -113,7 +115,7 @@ public class PinpointLocalizer implements Localizer {
      * This sets the start pose. This alters the start position even if it is already set, compensating as needed.
      *
      * @param setStart the new start pose
-     */
+     * //
     @Override
     public void setStartPose(Pose setStart) {
         if (!Objects.equals(startPose, new Pose()) && startPose != null) {
@@ -131,7 +133,7 @@ public class PinpointLocalizer implements Localizer {
      * pose estimate, not anything to do with the start pose.
      *
      * @param setPose the new current pose estimate
-     */
+     * //
     @Override
     public void setPose(Pose setPose) {
         odo.setPosition(PoseConverter.poseToPose2D(setPose, PedroCoordinates.INSTANCE));
@@ -141,7 +143,7 @@ public class PinpointLocalizer implements Localizer {
 
     /**
      * This updates the total heading of the robot. The Pinpoint handles all other updates itself.
-     */
+     * //
     @Override
     public void update() {
         odo.update();
@@ -158,7 +160,7 @@ public class PinpointLocalizer implements Localizer {
      * 2 * pi radians. This is used for some tuning things and nothing actually within the following.
      *
      * @return returns how far the robot has turned in total, in radians.
-     */
+     * //
     @Override
     public double getTotalHeading() {
         return totalHeading;
@@ -167,7 +169,7 @@ public class PinpointLocalizer implements Localizer {
     /**
      * This returns the Y encoder value as none of the odometry tuners are required for this localizer
      * @return returns the Y encoder value
-     */
+     * //
     @Override
     public double getForwardMultiplier() {
         return odo.getEncoderY();
@@ -176,7 +178,7 @@ public class PinpointLocalizer implements Localizer {
     /**
      * This returns the X encoder value as none of the odometry tuners are required for this localizer
      * @return returns the X encoder value
-     */
+     * //
     @Override
     public double getLateralMultiplier() {
         return odo.getEncoderX();
@@ -185,7 +187,7 @@ public class PinpointLocalizer implements Localizer {
     /**
      * This returns either the factory tuned yaw scalar or the yaw scalar tuned by yourself.
      * @return returns the yaw scalar
-     */
+     * //
     @Override
     public double getTurningMultiplier() {
         return odo.getYawScalar();
@@ -196,14 +198,14 @@ public class PinpointLocalizer implements Localizer {
      * @param xOffset How far to the side from the center of the robot is the x-pod? Use positive values if it's to the left and negative if it's to the right.
      * @param yOffset How far forward from the center of the robot is the y-pod? Use positive values if it's forward and negative if it's to the back.
      * @param unit The units that the measurements are given in
-     */
+     * //
     private void setOffsets(double xOffset, double yOffset, DistanceUnit unit) {
         odo.setOffsets(xOffset, yOffset, unit);
     }
 
     /**
      * This resets the IMU. Does not change heading estimation.
-     */
+     * //
     @Override
     public void resetIMU() {
         resetPinpoint();
@@ -216,7 +218,7 @@ public class PinpointLocalizer implements Localizer {
 
     /**
      * This resets the pinpoint.
-     */
+     * //
     private void resetPinpoint() {
         odo.resetPosAndIMU();
 
@@ -229,7 +231,7 @@ public class PinpointLocalizer implements Localizer {
 
     /**
      * This recalibrates the Pinpoint. It will take 0.25 seconds to recalibrate, and the robot must be still
-     */
+     * //
     public void recalibrate() {
         odo.recalibrateIMU();
     }
@@ -238,7 +240,7 @@ public class PinpointLocalizer implements Localizer {
      * This returns whether if any component of robot's position is NaN.
      *
      * @return returns whether the robot's position is NaN
-     */
+     * //
     @Override
     public boolean isNAN() {
         return Double.isNaN(getPose().getX()) || Double.isNaN(getPose().getY()) || Double.isNaN(getPose().getHeading());
@@ -249,7 +251,7 @@ public class PinpointLocalizer implements Localizer {
      * access any of its methods directly.
      *
      * @return returns the GoBildaPinpointDriver object used by this localizer
-     */
+     * //
     public GoBildaPinpointDriver getPinpoint() {
         return odo;
     }
@@ -269,3 +271,4 @@ public class PinpointLocalizer implements Localizer {
         odo.setHeading(heading, AngleUnit.RADIANS);
     }
 }
+*/

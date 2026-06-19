@@ -1,19 +1,18 @@
 package com.pedropathing.ftc.localization.localizers;
 
 import com.pedropathing.ftc.localization.CustomIMU;
-import com.pedropathing.ftc.localization.constants.TwoWheelConstants;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.IMU;
-
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import com.pedropathing.ftc.localization.Encoder;
+import com.pedropathing.ftc.localization.HubEncoder;
+import com.pedropathing.ftc.localization.constants.TwoWheelConstants;
+
+import com.pedropathing.ftc.localization.SystemCoreEncoder;
 import com.pedropathing.localization.Localizer;
 import com.pedropathing.math.Matrix;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.math.MathFunctions;
 import com.pedropathing.math.Vector;
 import com.pedropathing.util.NanoTimer;
+import org.wpilib.hardware.expansionhub.ExpansionHubMotor;
 
 /**
  * This is the TwoWheelLocalizer class. This class extends the Localizer superclass and is a
@@ -40,37 +39,71 @@ public class TwoWheelLocalizer implements Localizer {
     public static double FORWARD_TICKS_TO_INCHES;
     public static double STRAFE_TICKS_TO_INCHES;
 
+    public TwoWheelLocalizer(
+            org.wpilib.hardware.rotation.Encoder fwdEnc,
+            org.wpilib.hardware.rotation.Encoder strafeEnc,
+            CustomIMU hw_imu,
+            TwoWheelConstants constants) {
+        this(fwdEnc, strafeEnc, hw_imu, constants, new Pose());
+    }
+    public TwoWheelLocalizer(
+            org.wpilib.hardware.rotation.Encoder fwdEnc,
+            org.wpilib.hardware.rotation.Encoder strafeEnc,
+            CustomIMU hw_imu,
+            TwoWheelConstants constants,
+            Pose setStartPose) {
+        this(new SystemCoreEncoder(fwdEnc), new SystemCoreEncoder(strafeEnc), hw_imu, constants, setStartPose);
+    }
+    public TwoWheelLocalizer(
+            ExpansionHubMotor fwdEnc,
+            ExpansionHubMotor strafeEnc,
+            CustomIMU hw_imu,
+            TwoWheelConstants constants) {
+        this(fwdEnc, strafeEnc, hw_imu, constants, new Pose());
+    }
+    public TwoWheelLocalizer(
+            ExpansionHubMotor fwdEnc,
+            ExpansionHubMotor strafeEnc,
+            CustomIMU hw_imu,
+            TwoWheelConstants constants,
+            Pose setStartPose) {
+        this(new HubEncoder(fwdEnc), new HubEncoder(strafeEnc), hw_imu, constants, setStartPose);
+    }
     /**
      * This creates a new TwoWheelLocalizer from a HardwareMap, with a starting Pose at (0,0)
      * facing 0 heading.
      *
-     * @param map the HardwareMap
+     * @param fwdEnc the Forward encoder
+     * @param strafeEnc the Strafing encoder
+     * @param hw_imu the IMU to get the heading from
      */
-    public TwoWheelLocalizer(HardwareMap map, TwoWheelConstants constants) {
-        this(map, constants, new Pose());
+    public TwoWheelLocalizer(Encoder fwdEnc, Encoder strafeEnc, CustomIMU hw_imu, TwoWheelConstants constants) {
+        this(fwdEnc, strafeEnc, hw_imu, constants, new Pose());
     }
 
     /**
      * This creates a new TwoWheelLocalizer from a HardwareMap and a Pose, with the Pose
      * specifying the starting pose of the localizer.
      *
-     * @param map the HardwareMap
+     * @param fwdEnc the Forward encoder
+     * @param strafeEnc the Strafing encoder
+     * @param hw_imu the IMU to get the heading from
      * @param setStartPose the Pose to start from
      */
-    public TwoWheelLocalizer(HardwareMap map, TwoWheelConstants constants,Pose setStartPose) {
+    public TwoWheelLocalizer(Encoder fwdEnc, Encoder strafeEnc, CustomIMU hw_imu, TwoWheelConstants constants, Pose setStartPose) {
         FORWARD_TICKS_TO_INCHES = constants.forwardTicksToInches;
         STRAFE_TICKS_TO_INCHES = constants.strafeTicksToInches;
-        imu = constants.imu;
+        imu = hw_imu;
         strafePodX = constants.strafePodX;
         forwardPodY = constants.forwardPodY;
 
-        imu.initialize(map, constants.IMU_HardwareMapName, constants.IMU_Orientation);
+        imu.initialize();
 
-        forwardEncoder = new Encoder(map.get(DcMotorEx.class, constants.forwardEncoder_HardwareMapName));
-        strafeEncoder = new Encoder(map.get(DcMotorEx.class, constants.strafeEncoder_HardwareMapName));
+        forwardEncoder = fwdEnc;
+        strafeEncoder = strafeEnc;
 
-        forwardEncoder.setDirection(constants.forwardEncoderDirection);
-        strafeEncoder.setDirection(constants.strafeEncoderDirection);
+        forwardEncoder.setMultiplier(constants.forwardEncoderDirection);
+        strafeEncoder.setMultiplier(constants.strafeEncoderDirection);
 
         setStartPose(setStartPose);
         timer = new NanoTimer();

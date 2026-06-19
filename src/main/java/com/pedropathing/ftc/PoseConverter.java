@@ -1,3 +1,4 @@
+/*
 package com.pedropathing.ftc;
 
 import com.pedropathing.geometry.CoordinateSystem;
@@ -15,7 +16,7 @@ public class PoseConverter {
      * @param pose the Pose object
      * @param desiredCoordinateSystem the desired coordinate system
      * @return a Pose2D object with the x and y coordinates in inches and the heading in radians
-     */
+     * //
     public static Pose2D poseToPose2D(Pose pose, CoordinateSystem desiredCoordinateSystem) {
         return new Pose2D(DistanceUnit.INCH, pose.getAsCoordinateSystem(desiredCoordinateSystem).getX(), pose.getAsCoordinateSystem(desiredCoordinateSystem).getY(), AngleUnit.RADIANS, pose.getAsCoordinateSystem(desiredCoordinateSystem).getHeading());
     }
@@ -26,8 +27,9 @@ public class PoseConverter {
      * @param pose2d the Pose2D object
      * @param coordinateSystem the coordinate system
      * @return a Pose object with the x and y coordinates in inches and the heading in radians
-     */
+     * //
     public static Pose pose2DToPose(Pose2D pose2d, CoordinateSystem coordinateSystem) {
         return new Pose(pose2d.getX(DistanceUnit.INCH), pose2d.getY(DistanceUnit.INCH), pose2d.getHeading(AngleUnit.RADIANS), coordinateSystem);
     }
 }
+*/

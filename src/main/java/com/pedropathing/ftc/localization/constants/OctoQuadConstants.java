@@ -17,7 +17,7 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- */
+ * //
 
 package com.pedropathing.ftc.localization.constants;
 import com.qualcomm.hardware.digitalchickenlabs.OctoQuad;
@@ -31,7 +31,7 @@ public class OctoQuadConstants
 
     /**
      * This creates a new OctoQuadConstants with default values.
-     */
+     * //
     public OctoQuadConstants()
     {
         defaults();
@@ -139,3 +139,4 @@ public class OctoQuadConstants
         I2C_RECOVERY_MODE = OctoQuad.I2cRecoveryMode.MODE_1_PERIPH_RST_ON_FRAME_ERR;
     }
 }
+*/

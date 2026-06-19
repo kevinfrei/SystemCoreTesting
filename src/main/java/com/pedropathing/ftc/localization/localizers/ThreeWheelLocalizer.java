@@ -1,15 +1,16 @@
 package com.pedropathing.ftc.localization.localizers;
 
-import com.pedropathing.ftc.localization.constants.ThreeWheelConstants;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.HardwareMap;
-
 import com.pedropathing.ftc.localization.Encoder;
+import com.pedropathing.ftc.localization.HubEncoder;
+import com.pedropathing.ftc.localization.constants.ThreeWheelConstants;
+
+import com.pedropathing.ftc.localization.SystemCoreEncoder;
 import com.pedropathing.localization.Localizer;
 import com.pedropathing.math.Matrix;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.math.Vector;
 import com.pedropathing.util.NanoTimer;
+import org.wpilib.hardware.expansionhub.ExpansionHubMotor;
 
 /**
  * This is the ThreeWheelLocalizer class. This class extends the Localizer superclass and is a
@@ -37,24 +38,66 @@ public class ThreeWheelLocalizer implements Localizer {
     public static double STRAFE_TICKS_TO_INCHES;
     public static double TURN_TICKS_TO_RADIANS;
 
+    public ThreeWheelLocalizer(
+            org.wpilib.hardware.rotation.Encoder lEnc,
+            org.wpilib.hardware.rotation.Encoder rEnc,
+            org.wpilib.hardware.rotation.Encoder strafeEnc,
+            ThreeWheelConstants constants
+    ) {
+        this(lEnc, rEnc, strafeEnc, constants, new Pose());
+    }
+
+    public ThreeWheelLocalizer(
+            org.wpilib.hardware.rotation.Encoder lEnc,
+            org.wpilib.hardware.rotation.Encoder rEnc,
+            org.wpilib.hardware.rotation.Encoder strafeEnc,
+            ThreeWheelConstants constants,
+            Pose setStartPose
+    ) {
+        this(new SystemCoreEncoder(lEnc), new SystemCoreEncoder(rEnc), new SystemCoreEncoder(strafeEnc), constants, setStartPose);
+    }
+
+    public ThreeWheelLocalizer(
+            ExpansionHubMotor lEnc,
+            ExpansionHubMotor rEnc,
+            ExpansionHubMotor strafeEnc,
+            ThreeWheelConstants constants
+    ) {
+        this(lEnc, rEnc, strafeEnc, constants, new Pose());
+    }
+
+    public ThreeWheelLocalizer(
+            ExpansionHubMotor lEnc,
+            ExpansionHubMotor rEnc,
+            ExpansionHubMotor strafeEnc,
+            ThreeWheelConstants constants,
+            Pose setStartPose
+    ) {
+        this(new HubEncoder(lEnc), new HubEncoder(rEnc), new HubEncoder(strafeEnc), constants, setStartPose);
+    }
+
     /**
      * This creates a new ThreeWheelLocalizer from a HardwareMap, with a starting Pose at (0,0)
      * facing 0 heading.
      *
-     * @param map the HardwareMap
+     * @param lEnc the Left dead-wheel encoder
+     * @param rEnc the right dead-wheel encoder
+     * @param strafeEnc the strafing dead-wheel encoder
      */
-    public ThreeWheelLocalizer(HardwareMap map, ThreeWheelConstants constants) {
-        this(map,constants, new Pose());
+    public ThreeWheelLocalizer(Encoder lEnc, Encoder rEnc, Encoder strafeEnc, ThreeWheelConstants constants) {
+        this(lEnc, rEnc, strafeEnc, constants, new Pose());
     }
 
     /**
      * This creates a new ThreeWheelLocalizer from a HardwareMap and a Pose, with the Pose
      * specifying the starting pose of the localizer.
      *
-     * @param map the HardwareMap
+     * @param lEnc the Left dead-wheel encoder
+     * @param rEnc the right dead-wheel encoder
+     * @param strafeEnc the strafing dead-wheel encoder
      * @param setStartPose the Pose to start from
      */
-    public ThreeWheelLocalizer(HardwareMap map, ThreeWheelConstants constants, Pose setStartPose) {
+    public ThreeWheelLocalizer(Encoder lEnc, Encoder rEnc, Encoder strafeEnc, ThreeWheelConstants constants, Pose setStartPose) {
         FORWARD_TICKS_TO_INCHES = constants.forwardTicksToInches;
         STRAFE_TICKS_TO_INCHES = constants.strafeTicksToInches;
         TURN_TICKS_TO_RADIANS = constants.turnTicksToInches;
@@ -63,13 +106,13 @@ public class ThreeWheelLocalizer implements Localizer {
         rightEncoderPose = new Pose(0, constants.rightPodY, 0);
         strafeEncoderPose = new Pose(constants.strafePodX, 0, Math.toRadians(90));
 
-        leftEncoder = new Encoder(map.get(DcMotorEx.class, constants.leftEncoder_HardwareMapName));
-        rightEncoder = new Encoder(map.get(DcMotorEx.class, constants.rightEncoder_HardwareMapName));
-        strafeEncoder = new Encoder(map.get(DcMotorEx.class, constants.strafeEncoder_HardwareMapName));
+        leftEncoder = lEnc;
+        rightEncoder = rEnc;
+        strafeEncoder = strafeEnc;
 
-        leftEncoder.setDirection(constants.leftEncoderDirection);
-        rightEncoder.setDirection(constants.rightEncoderDirection);
-        strafeEncoder.setDirection(constants.strafeEncoderDirection);
+        leftEncoder.setMultiplier(constants.leftEncoderDirection);
+        rightEncoder.setMultiplier(constants.rightEncoderDirection);
+        strafeEncoder.setMultiplier(constants.strafeEncoderDirection);
 
         setStartPose(setStartPose);
         timer = new NanoTimer();

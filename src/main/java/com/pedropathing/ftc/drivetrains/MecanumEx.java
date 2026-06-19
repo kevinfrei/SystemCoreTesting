@@ -1,12 +1,13 @@
+/*
 package com.pedropathing.ftc.drivetrains;
+
+Note from Kevin: I migrated this mechanically, but after finding that it's deprecated, decided to just remove it.
 
 import com.pedropathing.drivetrain.CustomDrivetrain;
 import com.pedropathing.math.Vector;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.VoltageSensor;
-import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
+import com.revrobotics.spark.A301;
+import org.wpilib.hardware.expansionhub.ExpansionHubMotor;
+import org.wpilib.system.RobotController;
 
 import java.util.Arrays;
 import java.util.List;
@@ -15,52 +16,67 @@ import java.util.List;
  * This is the MecanumEx class, a version of Mecanum using CustomDrivetrain
  * @author Kabir Goyal
  * @version 1.0, 4/30/2025
- */
+ * //
 @Deprecated
 public class MecanumEx extends CustomDrivetrain {
     public MecanumConstants constants;
-    private final DcMotorEx leftFront;
-    private final DcMotorEx leftRear;
-    private final DcMotorEx rightFront;
-    private final DcMotorEx rightRear;
-    private final List<DcMotorEx> motors;
+    private final Motor leftFront;
+    private final Motor leftRear;
+    private final Motor rightFront;
+    private final Motor rightRear;
+    private final List<Motor> motors;
     private final double[] lastMotorPowers;
-    private final VoltageSensor voltageSensor;
     private double motorCachingThreshold;
     private boolean useBrakeModeInTeleOp;
     private double staticFrictionCoefficient;
 
+    public MecanumEx(A301 lf, A301 lr, A301 rr, A301 rf, MecanumConstants mc) {
+        this(new A301Motor(lf), new A301Motor(lr), new A301Motor(rr), new A301Motor(rf), mc);
+    }
+
+    public MecanumEx(
+            ExpansionHubMotor lf,
+            ExpansionHubMotor lr,
+            ExpansionHubMotor rr,
+            ExpansionHubMotor rf,
+            MecanumConstants mc
+    ){
+        this(new HubMotor(lf), new HubMotor(lr), new HubMotor(rr), new HubMotor(rf), mc);
+    }
     /**
      * This creates a new Mecanum, which takes in various movement vectors and outputs
      * the wheel drive powers necessary to move in the intended direction, given the true movement
      * vector for the front left mecanum wheel.
      *
-     * @param hardwareMap      this is the HardwareMap object that contains the motors and other hardware
+     * @param lf The Left Front motor
+     * @param lr the Left Rear motor
+     * @param rr the Right Rear motor
+     * @param rf the Right Front motor
      * @param mecanumConstants this is the MecanumConstants object that contains the names of the motors and directions etc.
-     */
-    public MecanumEx(HardwareMap hardwareMap, MecanumConstants mecanumConstants) {
+     * //
+    public MecanumEx(Motor lf, Motor lr, Motor rr, Motor rf, MecanumConstants mecanumConstants) {
         constants = mecanumConstants;
 
         this.maxPowerScaling = mecanumConstants.maxPower;
         this.motorCachingThreshold = mecanumConstants.motorCachingThreshold;
         this.useBrakeModeInTeleOp = mecanumConstants.useBrakeModeInTeleOp;
 
-        voltageSensor = hardwareMap.voltageSensor.iterator().next();
-
-        leftFront = hardwareMap.get(DcMotorEx.class, mecanumConstants.leftFrontMotorName);
-        leftRear = hardwareMap.get(DcMotorEx.class, mecanumConstants.leftRearMotorName);
-        rightRear = hardwareMap.get(DcMotorEx.class, mecanumConstants.rightRearMotorName);
-        rightFront = hardwareMap.get(DcMotorEx.class, mecanumConstants.rightFrontMotorName);
+        leftFront = lf;
+        leftRear = lr;
+        rightRear = rr;
+        rightFront = rf;
 
         motors = Arrays.asList(leftFront, leftRear, rightFront, rightRear);
         lastMotorPowers = new double[] {0,0,0,0};
 
+        // TODO:KBF Migrate this 'up the stack' somewhere?
+        /*
         for (DcMotorEx motor : motors) {
             MotorConfigurationType motorConfigurationType = motor.getMotorType().clone();
             motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
             motor.setMotorType(motorConfigurationType);
         }
-
+        * //
         setMotorsToFloat();
         breakFollowing();
 
@@ -84,7 +100,7 @@ public class MecanumEx extends CustomDrivetrain {
      * @param rotation the rotation power value, which would typically be
      *                 -gamepad1.right_stick_x in a normal arcade drive setup
      *                 because CCW is positive
-     */
+     * //
     public void arcadeDrive(double forward, double strafe, double rotation) {
         double[] wheelPowers = new double[4];
 
@@ -113,10 +129,10 @@ public class MecanumEx extends CustomDrivetrain {
 
     @Override
     public void updateConstants() {
-        leftFront.setDirection(constants.leftFrontMotorDirection);
-        leftRear.setDirection(constants.leftRearMotorDirection);
-        rightFront.setDirection(constants.rightFrontMotorDirection);
-        rightRear.setDirection(constants.rightRearMotorDirection);
+        leftFront.setReversed(constants.leftRearMotorInverted);
+        leftRear.setReversed(constants.leftRearMotorInverted);
+        rightFront.setReversed(constants.rightFrontMotorInverted);
+        rightRear.setReversed(constants.rightRearMotorInverted);
         this.motorCachingThreshold = constants.motorCachingThreshold;
         this.useBrakeModeInTeleOp = constants.useBrakeModeInTeleOp;
         this.voltageCompensation = constants.useVoltageCompensation;
@@ -127,19 +143,19 @@ public class MecanumEx extends CustomDrivetrain {
 
     /**
      * This sets the motors to the zero power behavior of brake.
-     */
+     * //
     private void setMotorsToBrake() {
-        for (DcMotorEx motor : motors) {
-            motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        for (Motor motor : motors) {
+            motor.setZeroBraking(true);
         }
     }
 
     /**
      * This sets the motors to the zero power behavior of float.
-     */
+     * //
     private void setMotorsToFloat() {
-        for (DcMotorEx motor : motors) {
-            motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        for (Motor motor : motors) {
+            motor.setZeroBraking(false);
         }
     }
 
@@ -195,7 +211,7 @@ public class MecanumEx extends CustomDrivetrain {
 
     @Override
     public double getVoltage() {
-        return voltageSensor.getVoltage();
+        return RobotController.getBatteryVoltage();
     }
 
     private double getVoltageNormalized() {
@@ -216,7 +232,8 @@ public class MecanumEx extends CustomDrivetrain {
                 '}';
     }
 
-    public List<DcMotorEx> getMotors() {
+    public List<Motor> getMotors() {
         return motors;
     }
 }
+*/

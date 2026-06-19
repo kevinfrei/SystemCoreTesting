@@ -2,14 +2,15 @@ package com.pedropathing.ftc.localization;
 
 // KBF- TODO: Implement this from the SystmeCore API
 
-public class SystemCoreIMU implements  CustomIMU {
+public class    SystemCoreIMU implements  CustomIMU {
 
     /**
      * Old version did this:
      *   Initializes the IMU using the hardwareMap and hubOrientation.
-     * @param hardwareMap the hardware map
-     * @param hardwareMapName the name of the hardware map
-     * @param hubOrientation the hub orientation
+     * @ param hardwareMap the hardware map
+     * @ param hardwareMapName the name of the hardware map
+     * @ param hubOrientation the hub orientation
+     * TODO:KBF Fix this. Not sure what the intialize method should take
      */
     @Override
     public void initialize() {

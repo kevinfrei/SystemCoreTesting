@@ -1,15 +1,18 @@
 package com.pedropathing.ftc.localization.localizers;
 
-import com.pedropathing.ftc.localization.constants.DriveEncoderConstants;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.HardwareMap;
-
+import com.pedropathing.ftc.localization.A301Encoder;
 import com.pedropathing.ftc.localization.Encoder;
+import com.pedropathing.ftc.localization.HubEncoder;
+import com.pedropathing.ftc.localization.constants.DriveEncoderConstants;
+
+import com.pedropathing.ftc.localization.SystemCoreEncoder;
 import com.pedropathing.localization.Localizer;
 import com.pedropathing.math.Matrix;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.math.Vector;
 import com.pedropathing.util.NanoTimer;
+import com.revrobotics.spark.A301;
+import org.wpilib.hardware.expansionhub.ExpansionHubMotor;
 
 /**
  * This is the DriveEncoderLocalizer class. This class extends the Localizer superclass and is a
@@ -41,20 +44,38 @@ public class DriveEncoderLocalizer implements Localizer {
      * This creates a new DriveEncoderLocalizer from a HardwareMap, with a starting Pose at (0,0)
      * facing 0 heading.
      *
-     * @param map the HardwareMap
+     * @param lf the left front motor
+     * @param lr the left rear motor
+     * @param rf the right front motor
+     * @param rr the right rear motor
+     * @param constants The DriveEncoderConstants for your drive base
      */
-    public DriveEncoderLocalizer(HardwareMap map, DriveEncoderConstants constants) {
-        this(map, constants, new Pose());
+    public DriveEncoderLocalizer(A301 lf, A301 lr, A301 rr, A301 rf, DriveEncoderConstants constants) {
+        this(lf, lr, rr, rf, constants, new Pose());
     }
-
+    public DriveEncoderLocalizer(A301 lf, A301 lr, A301 rr, A301 rf, DriveEncoderConstants constants, Pose startPose) {
+        this(new A301Encoder(lf), new A301Encoder(lr), new A301Encoder(rr), new A301Encoder(rf), constants, startPose);
+    }
+    public DriveEncoderLocalizer(ExpansionHubMotor lf, ExpansionHubMotor lr, ExpansionHubMotor rr, ExpansionHubMotor rf, DriveEncoderConstants constants) {
+        this(lf, lr, rr, rf, constants, new Pose());
+    }
+    public DriveEncoderLocalizer(ExpansionHubMotor lf, ExpansionHubMotor lr, ExpansionHubMotor rr, ExpansionHubMotor rf, DriveEncoderConstants constants, Pose startPose) {
+        this(new HubEncoder(lf), new HubEncoder(lr), new HubEncoder(rr), new HubEncoder(rf), constants, startPose);
+    }
+    public DriveEncoderLocalizer(Encoder lf, Encoder lr, Encoder rr, Encoder rf, DriveEncoderConstants constants) {
+        this(lf, lr, rr, rf, constants, new Pose());
+    }
     /**
      * This creates a new DriveEncoderLocalizer from a HardwareMap and a Pose, with the Pose
      * specifying the starting pose of the localizer.
      *
-     * @param map the HardwareMap
+     * @param lf the left front motor
+     * @param lr the left rear motor
+     * @param rf the right front motor
+     * @param rr the right rear motor
      * @param setStartPose the Pose to start from
      */
-    public DriveEncoderLocalizer(HardwareMap map, DriveEncoderConstants constants, Pose setStartPose) {
+    public DriveEncoderLocalizer(Encoder lf, Encoder lr, Encoder rr, Encoder rf, DriveEncoderConstants constants, Pose setStartPose) {
         FORWARD_TICKS_TO_INCHES = constants.forwardTicksToInches;
         STRAFE_TICKS_TO_INCHES = constants.strafeTicksToInches;
         TURN_TICKS_TO_RADIANS = constants.turnTicksToInches;
@@ -62,15 +83,15 @@ public class DriveEncoderLocalizer implements Localizer {
         ROBOT_WIDTH = constants.robot_Width;
         ROBOT_LENGTH = constants.robot_Length;
 
-        leftFront = new Encoder(map.get(DcMotorEx.class, constants.leftFrontMotorName));
-        leftRear = new Encoder(map.get(DcMotorEx.class, constants.leftRearMotorName));
-        rightRear = new Encoder(map.get(DcMotorEx.class, constants.rightRearMotorName));
-        rightFront = new Encoder(map.get(DcMotorEx.class, constants.rightFrontMotorName));
+        leftFront = lf;
+        leftRear = lr;
+        rightRear = rr;
+        rightFront = rf;
 
-        leftFront.setDirection(constants.leftFrontEncoderDirection);
-        leftRear.setDirection(constants.leftRearEncoderDirection);
-        rightFront.setDirection(constants.rightFrontEncoderDirection);
-        rightRear.setDirection(constants.rightRearEncoderDirection);
+        leftFront.setMultiplier(constants.leftFrontEncoderDirection == SystemCoreEncoder.REVERSE ? -1 : 1);
+        leftRear.setMultiplier(constants.leftRearEncoderDirection == SystemCoreEncoder.REVERSE ? -1 : 1);
+        rightFront.setMultiplier(constants.rightFrontEncoderDirection == SystemCoreEncoder.REVERSE ? -1 : 1);
+        rightRear.setMultiplier(constants.rightRearEncoderDirection == SystemCoreEncoder.REVERSE ? -1 : 1);
 
         setStartPose(setStartPose);
         timer = new NanoTimer();

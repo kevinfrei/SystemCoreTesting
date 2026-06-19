@@ -1,20 +1,18 @@
 package com.pedropathing.ftc.localization.localizers;
 
 import com.pedropathing.ftc.localization.CustomIMU;
-import com.pedropathing.ftc.localization.constants.ThreeWheelIMUConstants;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.IMU;
-
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-
 import com.pedropathing.ftc.localization.Encoder;
+import com.pedropathing.ftc.localization.HubEncoder;
+import com.pedropathing.ftc.localization.constants.ThreeWheelIMUConstants;
+
+import com.pedropathing.ftc.localization.SystemCoreEncoder;
 import com.pedropathing.localization.Localizer;
 import com.pedropathing.math.Matrix;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.math.MathFunctions;
 import com.pedropathing.math.Vector;
 import com.pedropathing.util.NanoTimer;
+import org.wpilib.hardware.expansionhub.ExpansionHubMotor;
 
 /**
  * This is the ThreeWheelIMULocalizer class. This class extends the Localizer superclass and is a
@@ -54,38 +52,77 @@ public class ThreeWheelIMULocalizer implements Localizer {
      * This creates a new ThreeWheelIMULocalizer from a HardwareMap, with a starting Pose at (0,0)
      * facing 0 heading.
      *
-     * @param map the HardwareMap
+     * @param lEnc the Left dead-wheel encoder
+     * @param rEnc the right dead-wheel encoder
+     * @param strafeEnc the strafing dead-wheel encoder
+     * @param hw_imu the IMU to be used for heading (along with the wheels...)
      */
-    public ThreeWheelIMULocalizer(HardwareMap map, ThreeWheelIMUConstants constants) {
-        this(map, constants, new Pose());
+    public ThreeWheelIMULocalizer(
+            org.wpilib.hardware.rotation.Encoder lEnc,
+            org.wpilib.hardware.rotation.Encoder rEnc,
+            org.wpilib.hardware.rotation.Encoder strafeEnc,
+            CustomIMU hw_imu,
+            ThreeWheelIMUConstants constants) {
+        this(lEnc, rEnc, strafeEnc, hw_imu, constants, new Pose());
     }
 
+    public ThreeWheelIMULocalizer(
+            org.wpilib.hardware.rotation.Encoder lEnc,
+            org.wpilib.hardware.rotation.Encoder rEnc,
+            org.wpilib.hardware.rotation.Encoder strafeEnc,
+            CustomIMU hw_imu,
+            ThreeWheelIMUConstants constants,
+            Pose setStartPose) {
+        this(new SystemCoreEncoder(lEnc), new SystemCoreEncoder(rEnc), new SystemCoreEncoder(strafeEnc), hw_imu, constants, setStartPose);
+    }
+
+    public ThreeWheelIMULocalizer(
+            ExpansionHubMotor lEnc,
+            ExpansionHubMotor rEnc,
+            ExpansionHubMotor strafeEnc,
+            CustomIMU hw_imu,
+            ThreeWheelIMUConstants constants) {
+        this(lEnc, rEnc, strafeEnc, hw_imu, constants, new Pose());
+    }
+
+    public ThreeWheelIMULocalizer(
+            ExpansionHubMotor lEnc,
+            ExpansionHubMotor rEnc,
+            ExpansionHubMotor strafeEnc,
+            CustomIMU hw_imu,
+            ThreeWheelIMUConstants constants,
+            Pose setStartPose) {
+        this(new HubEncoder(lEnc), new HubEncoder(rEnc), new HubEncoder(strafeEnc), hw_imu, constants, setStartPose);
+    }
     /**
      * This creates a new ThreeWheelIMULocalizer from a HardwareMap and a Pose, with the Pose
      * specifying the starting pose of the localizer.
      *
-     * @param map          the HardwareMap
+     * @param lEnc the Left dead-wheel encoder
+     * @param rEnc the right dead-wheel encoder
+     * @param strafeEnc the strafing dead-wheel encoder
+     * @param hw_imu the IMU to be used for heading (along with the wheels...)
      * @param setStartPose the Pose to start from
      */
-    public ThreeWheelIMULocalizer(HardwareMap map, ThreeWheelIMUConstants constants, Pose setStartPose) {
+    public ThreeWheelIMULocalizer(Encoder lEnc, Encoder rEnc, Encoder strafeEnc, CustomIMU hw_imu, ThreeWheelIMUConstants constants, Pose setStartPose) {
         FORWARD_TICKS_TO_INCHES = constants.forwardTicksToInches;
         STRAFE_TICKS_TO_INCHES = constants.strafeTicksToInches;
         TURN_TICKS_TO_RADIANS = constants.turnTicksToInches;
-        imu = constants.imu;
+        imu = hw_imu;
 
         leftEncoderPose = new Pose(0, constants.leftPodY, 0);
         rightEncoderPose = new Pose(0, constants.rightPodY, 0);
         strafeEncoderPose = new Pose(constants.strafePodX, 0, Math.toRadians(90));
 
-        imu.initialize(map, constants.IMU_HardwareMapName, constants.IMU_Orientation);
+        imu.initialize();
 
-        leftEncoder = new Encoder(map.get(DcMotorEx.class, constants.leftEncoder_HardwareMapName));
-        rightEncoder = new Encoder(map.get(DcMotorEx.class, constants.rightEncoder_HardwareMapName));
-        strafeEncoder = new Encoder(map.get(DcMotorEx.class, constants.strafeEncoder_HardwareMapName));
+        leftEncoder = lEnc;
+        rightEncoder = rEnc;
+        strafeEncoder = strafeEnc;
 
-        leftEncoder.setDirection(constants.leftEncoderDirection);
-        rightEncoder.setDirection(constants.rightEncoderDirection);
-        strafeEncoder.setDirection(constants.strafeEncoderDirection);
+        leftEncoder.setMultiplier(constants.leftEncoderDirection);
+        rightEncoder.setMultiplier(constants.rightEncoderDirection);
+        strafeEncoder.setMultiplier(constants.strafeEncoderDirection);
 
         setStartPose(setStartPose);
         timer = new NanoTimer();

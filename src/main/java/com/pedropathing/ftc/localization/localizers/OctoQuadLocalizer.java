@@ -19,6 +19,8 @@
  * SOFTWARE.
  */
 
+/* TODO:KBF Still probably going to need this at some point...
+
 package com.pedropathing.ftc.localization.localizers;
 
 import com.pedropathing.ftc.localization.constants.OctoQuadConstants;
@@ -47,18 +49,18 @@ public class OctoQuadLocalizer implements Localizer
 
     /**
      * Controls the hardware initialization behavior in the constructor
-     */
+     * //
     public enum InitMode
     {
         /**
          * Initialize the hardware, e.g. send all localizer constants & reset IMU
-         */
+         * //
         INITIALIZE_OCTOQUAD,
 
         /**
          * Do NOT perform any initialization on the hardware: any values supplied
          * to the constructor in the {@link com.pedropathing.ftc.localization.constants.OctoQuadConstants} object will be ignored!!
-         */
+         * //
         ASSUME_EXTERNAL_INITIALIZATION
     }
 
@@ -67,14 +69,14 @@ public class OctoQuadLocalizer implements Localizer
      * This may be useful if you, for example, want to use a single bulk
      * read from the OQ to grab both localizer and encoder data, and then
      * send the localizer data to Pedro while using the encoder data elsewhere.
-     */
+     * //
     public interface DataSupplier
     {
         /**
          * This will be called when Pedro wants new localization data.
          * @return most recent localization data that you have read from
          *         the OctoQuad externally in your OpMode.
-         */
+         * //
         OctoQuad.LocalizerDataBlock onDataRequest();
     }
 
@@ -83,7 +85,7 @@ public class OctoQuadLocalizer implements Localizer
      * rather than having Pedro poll the hardware itself.
      * See corresponding comments on {@link DataSupplier}
      * @param supplier callback to provide new localization data externally
-     */
+     * //
     public void setExternalDataSupplier(DataSupplier supplier)
     {
         this.externalDataSupplier = supplier;
@@ -96,7 +98,7 @@ public class OctoQuadLocalizer implements Localizer
      *                  NB: this will be ignored if you choose to use
      *                  {@link InitMode#ASSUME_EXTERNAL_INITIALIZATION}
      * @param initMode see {@link InitMode}
-     */
+     * //
     public OctoQuadLocalizer(HardwareMap hardwareMap, OctoQuadConstants constants, InitMode initMode)
     {
         octoQuad = hardwareMap.get(OctoQuad.class, constants.hardwareMapName);
@@ -146,7 +148,7 @@ public class OctoQuadLocalizer implements Localizer
      * to the hardware for updated data, nor does it trigger an
      * external data provider callback, if applicable.
      * @return last cached pose estimate
-     */
+     * //
     @Override
     public Pose getPose()
     {
@@ -158,7 +160,7 @@ public class OctoQuadLocalizer implements Localizer
      * to the hardware for updated data, nor does it trigger an
      * external data provider callback, if applicable.
      * @return last cached velocity estimate
-     */
+     * //
     @Override
     public Pose getVelocity()
     {
@@ -170,7 +172,7 @@ public class OctoQuadLocalizer implements Localizer
      * to the hardware for updated data, nor does it trigger an
      * external data provider callback, if applicable.
      * @return last cached velocity estimate
-     */
+     * //
     @Override
     public Vector getVelocityVector()
     {
@@ -181,7 +183,7 @@ public class OctoQuadLocalizer implements Localizer
      * Since nobody should be using this after the robot has begun moving,
      * this is functionally the same as setPose(Pose).
      * @param setStart the new current pose estimate
-     */
+     * //
     @Override
     public void setStartPose(Pose setStart)
     {
@@ -193,7 +195,7 @@ public class OctoQuadLocalizer implements Localizer
      * a ground truth estimate from vision for example)
      * This will send the new pose out to the hardware!
      * @param setPose the new current pose estimate
-     */
+     * //
     @Override
     public void setPose(Pose setPose)
     {
@@ -260,7 +262,7 @@ public class OctoQuadLocalizer implements Localizer
      * Updates the localizer pose estimate, either by contacting the
      * hardware or invoking the external data supplier callback, if
      * one had been registered.
-     */
+     * //
     @Override
     public void update()
     {
@@ -278,7 +280,7 @@ public class OctoQuadLocalizer implements Localizer
      * Get the un-normalized localizer heading in radians
      * (does not wrap at +/- 2pi)
      * @return un-normalized localizer heading in radians
-     */
+     * //
     @Override
     public double getTotalHeading()
     {
@@ -289,7 +291,7 @@ public class OctoQuadLocalizer implements Localizer
      * Do not use.
      * For OctoQuad devices, please use the tuning OpMode provided by DigitalChickenLabs
      * @return throws RuntimeException
-     */
+     * //
     @Override
     public double getForwardMultiplier()
     {
@@ -300,7 +302,7 @@ public class OctoQuadLocalizer implements Localizer
      * Do not use.
      * For OctoQuad devices, please use the tuning OpMode provided by DigitalChickenLabs
      * @return throws RuntimeException
-     */
+     * //
     @Override
     public double getLateralMultiplier()
     {
@@ -311,7 +313,7 @@ public class OctoQuadLocalizer implements Localizer
      * Do not use.
      * For OctoQuad devices, please use the tuning OpMode provided by DigitalChickenLabs
      * @return throws RuntimeException
-     */
+     * //
     @Override
     public double getTurningMultiplier()
     {
@@ -320,7 +322,7 @@ public class OctoQuadLocalizer implements Localizer
 
     /**
      * This recalibrates the IMU and resets the localizer pose to 0,0,0
-     */
+     * //
     @Override
     public void resetIMU()
     {
@@ -343,7 +345,7 @@ public class OctoQuadLocalizer implements Localizer
      * Get the normalized localizer heading in radians
      * (Wraps at +/- 2pi)
      * @return normalized localizer heading in radians
-     */
+     * //
     @Override
     public double getIMUHeading()
     {
@@ -353,7 +355,7 @@ public class OctoQuadLocalizer implements Localizer
     /**
      * OctoQuad data is never NaN, because it is guarded by a CRC
      * @return false
-     */
+     * //
     @Override
     public boolean isNAN()
     {
@@ -363,9 +365,10 @@ public class OctoQuadLocalizer implements Localizer
     /**
      * Get a handle to the backing OctoQuad object pulled from the hardwareMap
      * @return the backing OctoQuad object pulled from the hardwareMap
-     */
+     * //
     public OctoQuad getOctoQuad()
     {
         return octoQuad;
     }
 }
+*/

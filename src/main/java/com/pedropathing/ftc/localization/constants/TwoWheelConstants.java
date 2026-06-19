@@ -1,11 +1,9 @@
 package com.pedropathing.ftc.localization.constants;
 
-
-import com.pedropathing.ftc.localization.CustomIMU;
 import com.pedropathing.ftc.localization.Encoder;
-import com.pedropathing.ftc.localization.RevHubIMU;
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
-import com.qualcomm.robotcore.hardware.IMU;
+import com.pedropathing.ftc.localization.SystemCoreEncoder;
+
+import org.wpilib.hardware.imu.OnboardIMU;
 
 /**
  * This is the TwoWheelConstants class. It holds many constants and parameters for the Two Wheel Localizer.
@@ -32,21 +30,10 @@ public class TwoWheelConstants {
      * Default Value: -2.5 */
     public double strafePodX = -2.5;
 
-    /** The Hardware Map Name of the IMU (built-in IMU will be Port 0, "imu")
-     * Default Value: "imu" */
-    public String IMU_HardwareMapName = "imu";
-
-    /** The Hardware Map Name of the Forward Encoder (name of the motor port it is plugged into)
-     * Default Value: "leftFront" */
-    public String forwardEncoder_HardwareMapName = "leftFront";
-
-    /** The Hardware Map Name of the Strafe Encoder (name of the motor port it is plugged into)
-     * Default Value: "rightRear" */
-    public String strafeEncoder_HardwareMapName = "rightRear";
-
     /** The Orientation of the IMU on the robot
-     * Default Value: new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.LEFT) */
-    public RevHubOrientationOnRobot IMU_Orientation = new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.LEFT);
+     * Default Value: FLAT
+     */
+    public OnboardIMU.MountOrientation IMU_Orientation = OnboardIMU.MountOrientation.FLAT;
 
     /** The direction of the forward encoder
      * Default Value: Encoder.REVERSE */
@@ -55,11 +42,6 @@ public class TwoWheelConstants {
     /** The direction of the strafe encoder
      * Default Value: Encoder.FORWARD */
     public double strafeEncoderDirection = Encoder.FORWARD;
-
-    /**
-     * This is the IMU that will be used for localization.
-     */
-    public CustomIMU imu = new RevHubIMU();
 
     /**
      * This creates a new TwoWheelConstants with default values.
@@ -88,22 +70,7 @@ public class TwoWheelConstants {
         return this;
     }
 
-    public TwoWheelConstants IMU_HardwareMapName(String IMU_HardwareMapName) {
-        this.IMU_HardwareMapName = IMU_HardwareMapName;
-        return this;
-    }
-
-    public TwoWheelConstants forwardEncoder_HardwareMapName(String forwardEncoder_HardwareMapName) {
-        this.forwardEncoder_HardwareMapName = forwardEncoder_HardwareMapName;
-        return this;
-    }
-
-    public TwoWheelConstants strafeEncoder_HardwareMapName(String strafeEncoder_HardwareMapName) {
-        this.strafeEncoder_HardwareMapName = strafeEncoder_HardwareMapName;
-        return this;
-    }
-
-    public TwoWheelConstants IMU_Orientation(RevHubOrientationOnRobot IMU_Orientation) {
+    public TwoWheelConstants IMU_Orientation(OnboardIMU.MountOrientation IMU_Orientation) {
         this.IMU_Orientation = IMU_Orientation;
         return this;
     }
@@ -118,11 +85,6 @@ public class TwoWheelConstants {
         return this;
     }
 
-    public TwoWheelConstants customIMU(CustomIMU customIMU) {
-        this.imu = customIMU;
-        return this;
-    }
-
     /**
      * This sets the default values for the this.
      */
@@ -131,12 +93,8 @@ public class TwoWheelConstants {
         strafeTicksToInches = .001989436789;
         forwardPodY = 1;
         strafePodX = -2.5;
-        IMU_HardwareMapName = "imu";
-        forwardEncoder_HardwareMapName = "leftFront";
-        strafeEncoder_HardwareMapName = "rightRear";
-        IMU_Orientation = new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.LEFT);
-        forwardEncoderDirection = Encoder.REVERSE;
-        strafeEncoderDirection = Encoder.FORWARD;
-        imu = new RevHubIMU();
+        IMU_Orientation = OnboardIMU.MountOrientation.FLAT;
+        forwardEncoderDirection = SystemCoreEncoder.REVERSE;
+        strafeEncoderDirection = SystemCoreEncoder.FORWARD;
     }
 }

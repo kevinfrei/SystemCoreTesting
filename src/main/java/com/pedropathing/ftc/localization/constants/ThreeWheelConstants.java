@@ -1,7 +1,7 @@
 package com.pedropathing.ftc.localization.constants;
 
 
-import com.pedropathing.ftc.localization.Encoder;
+import com.pedropathing.ftc.localization.SystemCoreEncoder;
 
 /**
  * This is the ThreeWheelConstants class. It holds many constants and parameters for the Three Wheel Localizer.
@@ -36,29 +36,17 @@ public class ThreeWheelConstants {
      * Default Value: -2.5 */
     public double strafePodX = -2.5;
 
-    /** The name of the Left Encoder in the hardware map (name of the motor port it is plugged into)
-     * Default Value: "leftFront" */
-    public String leftEncoder_HardwareMapName = "leftFront";
-
-    /** The name of the Right Encoder in the hardware map (name of the motor port it is plugged into)
-     * Default Value: "rightRear" */
-    public String rightEncoder_HardwareMapName = "rightRear";
-
-    /** The name of the Strafe Encoder in the hardware map (name of the motor port it is plugged into)
-     * Default Value: "rightFront" */
-    public String strafeEncoder_HardwareMapName = "rightFront";
-
     /** The direction of the Left Encoder
      * Default Value: Encoder.REVERSE */
-    public double leftEncoderDirection = Encoder.REVERSE;
+    public double leftEncoderDirection = SystemCoreEncoder.REVERSE;
 
     /** The direction of the Right Encoder
      * Default Value: Encoder.REVERSE */
-    public double rightEncoderDirection = Encoder.REVERSE;
+    public double rightEncoderDirection = SystemCoreEncoder.REVERSE;
 
     /** The direction of the Strafe Encoder
      * Default Value: Encoder.FORWARD */
-    public double strafeEncoderDirection = Encoder.FORWARD;
+    public double strafeEncoderDirection = SystemCoreEncoder.FORWARD;
 
     /**
      * This creates a new ThreeWheelConstants with default values.
@@ -97,21 +85,6 @@ public class ThreeWheelConstants {
         return this;
     }
 
-    public ThreeWheelConstants leftEncoder_HardwareMapName(String leftEncoder_HardwareMapName) {
-        this.leftEncoder_HardwareMapName = leftEncoder_HardwareMapName;
-        return this;
-    }
-
-    public ThreeWheelConstants rightEncoder_HardwareMapName(String rightEncoder_HardwareMapName) {
-        this.rightEncoder_HardwareMapName = rightEncoder_HardwareMapName;
-        return this;
-    }
-
-    public ThreeWheelConstants strafeEncoder_HardwareMapName(String strafeEncoder_HardwareMapName) {
-        this.strafeEncoder_HardwareMapName = strafeEncoder_HardwareMapName;
-        return this;
-    }
-
     public ThreeWheelConstants leftEncoderDirection(double leftEncoderDirection) {
         this.leftEncoderDirection = leftEncoderDirection;
         return this;
@@ -134,11 +107,8 @@ public class ThreeWheelConstants {
         leftPodY = 1;
         rightPodY = -1;
         strafePodX = -2.5;
-        leftEncoder_HardwareMapName = "leftFront";
-        rightEncoder_HardwareMapName = "rightRear";
-        strafeEncoder_HardwareMapName = "rightFront";
-        leftEncoderDirection = Encoder.REVERSE;
-        rightEncoderDirection = Encoder.REVERSE;
-        strafeEncoderDirection = Encoder.FORWARD;
+        leftEncoderDirection = SystemCoreEncoder.REVERSE;
+        rightEncoderDirection = SystemCoreEncoder.REVERSE;
+        strafeEncoderDirection = SystemCoreEncoder.FORWARD;
     }
 }

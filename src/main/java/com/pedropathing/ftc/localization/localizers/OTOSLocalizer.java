@@ -1,3 +1,6 @@
+
+/* TODO:KBF Port this some time...
+
 package com.pedropathing.ftc.localization.localizers;
 
 import com.pedropathing.ftc.localization.constants.OTOSConstants;
@@ -15,7 +18,7 @@ import com.pedropathing.math.Vector;
  *
  * @author Anyi Lin - 10158 Scott's Bots
  * @version 1.0, 7/20/2024
- */
+ * //
 public class OTOSLocalizer implements Localizer {
     private Pose startPose;
     private final SparkFunOTOS otos;
@@ -30,7 +33,7 @@ public class OTOSLocalizer implements Localizer {
      * facing 0 heading.
      *
      * @param map the HardwareMap
-     */
+     * //
     public OTOSLocalizer(HardwareMap map, OTOSConstants constants) {
         this(map, constants, new Pose());
     }
@@ -41,7 +44,7 @@ public class OTOSLocalizer implements Localizer {
      *
      * @param map the HardwareMap
      * @param setStartPose the Pose to start from
-     */
+     * //
 
     public OTOSLocalizer(HardwareMap map, OTOSConstants constants, Pose setStartPose) {
 
@@ -73,7 +76,7 @@ public class OTOSLocalizer implements Localizer {
      * This returns the current pose estimate.
      *
      * @return returns the current pose estimate as a Pose
-     */
+     * //
     @Override
     public Pose getPose() {
         Pose pose = new Pose(otosPose.x, otosPose.y, otosPose.h);
@@ -88,7 +91,7 @@ public class OTOSLocalizer implements Localizer {
      * This returns the current velocity estimate.
      *
      * @return returns the current velocity estimate as a Pose
-     */
+     * //
     @Override
     public Pose getVelocity() {
         return new Pose(otosVel.x, otosVel.y, otosVel.h);
@@ -98,7 +101,7 @@ public class OTOSLocalizer implements Localizer {
      * This returns the current velocity estimate.
      *
      * @return returns the current velocity estimate as a Vector
-     */
+     * //
     @Override
     public Vector getVelocityVector() {
         return getVelocity().getAsVector();
@@ -109,7 +112,7 @@ public class OTOSLocalizer implements Localizer {
      * previous movements were displacing it from its new start pose.
      *
      * @param setStart the new start pose
-     */
+     * //
     @Override
     public void setStartPose(Pose setStart) {
         startPose = setStart;
@@ -120,7 +123,7 @@ public class OTOSLocalizer implements Localizer {
      * pose estimate, not anything to do with the start pose.
      *
      * @param setPose the new current pose estimate
-     */
+     * //
     @Override
     public void setPose(Pose setPose) {
         resetOTOS();
@@ -130,7 +133,7 @@ public class OTOSLocalizer implements Localizer {
 
     /**
      * This updates the total heading of the robot. The OTOS handles all other updates itself.
-     */
+     * //
     @Override
     public void update() {
         otos.getPosVelAcc(otosPose,otosVel,otosAcc);
@@ -141,7 +144,7 @@ public class OTOSLocalizer implements Localizer {
 
     /**
      * This resets the OTOS.
-     */
+     * //
     public void resetOTOS() {
         otos.resetTracking();
     }
@@ -151,7 +154,7 @@ public class OTOSLocalizer implements Localizer {
      * 2 * pi radians. This is used for some tuning things and nothing actually within the following.
      *
      * @return returns how far the robot has turned in total, in radians.
-     */
+     * //
     @Override
     public double getTotalHeading() {
         return totalHeading;
@@ -163,7 +166,7 @@ public class OTOSLocalizer implements Localizer {
      * This is found empirically through a tuner.
      *
      * @return returns the forward ticks to inches multiplier
-     */
+     * //
     @Override
     public double getForwardMultiplier() {
         return otos.getLinearScalar();
@@ -175,7 +178,7 @@ public class OTOSLocalizer implements Localizer {
      * This is found empirically through a tuner.
      *
      * @return returns the lateral/strafe ticks to inches multiplier
-     */
+     * //
     @Override
     public double getLateralMultiplier() {
         return otos.getLinearScalar();
@@ -186,7 +189,7 @@ public class OTOSLocalizer implements Localizer {
      * to radians. This is found empirically through a tuner.
      *
      * @return returns the turning ticks to radians multiplier
-     */
+     * //
     @Override
     public double getTurningMultiplier() {
         return otos.getAngularScalar();
@@ -194,7 +197,7 @@ public class OTOSLocalizer implements Localizer {
 
     /**
      * This does nothing since this localizer does not use the IMU.
-     */
+     * //
     @Override
     public void resetIMU() {
     }
@@ -208,9 +211,10 @@ public class OTOSLocalizer implements Localizer {
      * This returns whether if any component of robot's position is NaN.
      *
      * @return returns whether the robot's position is NaN
-     */
+     * //
     @Override
     public boolean isNAN() {
         return Double.isNaN(getPose().getX()) || Double.isNaN(getPose().getY()) || Double.isNaN(getPose().getHeading());
     }
 }
+*/

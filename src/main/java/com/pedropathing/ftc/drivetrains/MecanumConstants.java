@@ -2,7 +2,6 @@ package com.pedropathing.ftc.drivetrains;
 
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.math.Vector;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 public class MecanumConstants {
     /** The Forward Velocity of the Robot - Different for each robot
@@ -21,14 +20,10 @@ public class MecanumConstants {
      */
     public  Vector frontLeftVector = new Vector(convertToPolar[0], convertToPolar[1]).normalize();
     public  double maxPower = 1;
-    public  String leftFrontMotorName = "leftFront";
-    public  String leftRearMotorName = "leftRear";
-    public  String rightFrontMotorName = "rightFront";
-    public  String rightRearMotorName = "rightRear";
-    public  DcMotorSimple.Direction leftFrontMotorDirection = DcMotorSimple.Direction.REVERSE;
-    public  DcMotorSimple.Direction leftRearMotorDirection = DcMotorSimple.Direction.REVERSE;
-    public  DcMotorSimple.Direction rightFrontMotorDirection = DcMotorSimple.Direction.FORWARD;
-    public  DcMotorSimple.Direction rightRearMotorDirection = DcMotorSimple.Direction.FORWARD;
+    public  boolean leftFrontMotorInverted = true;
+    public  boolean leftRearMotorInverted = true;
+    public  boolean rightFrontMotorInverted = false;
+    public  boolean rightRearMotorInverted = false;
     public  double motorCachingThreshold = 0.01;
     public  boolean useBrakeModeInTeleOp = false;
     public  boolean useVoltageCompensation = false;
@@ -54,43 +49,23 @@ public class MecanumConstants {
         return this;
     }
 
-    public MecanumConstants leftFrontMotorName(String leftFrontMotorName) {
-        this.leftFrontMotorName = leftFrontMotorName;
+    public MecanumConstants leftFrontMotorInverted(boolean leftFrontMotorInverted) {
+        this.leftFrontMotorInverted = leftFrontMotorInverted;
         return this;
     }
 
-    public MecanumConstants leftRearMotorName(String leftRearMotorName) {
-        this.leftRearMotorName = leftRearMotorName;
+    public MecanumConstants leftRearMotorInverted(boolean leftRearMotorInverted) {
+        this.leftRearMotorInverted = leftRearMotorInverted;
         return this;
     }
 
-    public MecanumConstants rightFrontMotorName(String rightFrontMotorName) {
-        this.rightFrontMotorName = rightFrontMotorName;
+    public MecanumConstants rightFrontMotorInverted(boolean rightFrontMotorInverted) {
+        this.rightFrontMotorInverted = rightFrontMotorInverted;
         return this;
     }
 
-    public MecanumConstants rightRearMotorName(String rightRearMotorName) {
-        this.rightRearMotorName = rightRearMotorName;
-        return this;
-    }
-
-    public MecanumConstants leftFrontMotorDirection(DcMotorSimple.Direction leftFrontMotorDirection) {
-        this.leftFrontMotorDirection = leftFrontMotorDirection;
-        return this;
-    }
-
-    public MecanumConstants leftRearMotorDirection(DcMotorSimple.Direction leftRearMotorDirection) {
-        this.leftRearMotorDirection = leftRearMotorDirection;
-        return this;
-    }
-
-    public MecanumConstants rightFrontMotorDirection(DcMotorSimple.Direction rightFrontMotorDirection) {
-        this.rightFrontMotorDirection = rightFrontMotorDirection;
-        return this;
-    }
-
-    public MecanumConstants rightRearMotorDirection(DcMotorSimple.Direction rightRearMotorDirection) {
-        this.rightRearMotorDirection = rightRearMotorDirection;
+    public MecanumConstants rightRearMotorDirection(boolean rightRearMotorDirection) {
+        this.rightRearMotorInverted = rightRearMotorDirection;
         return this;
     }
 
@@ -151,68 +126,36 @@ public class MecanumConstants {
         this.maxPower = maxPower;
     }
 
-    public String getLeftFrontMotorName() {
-        return leftFrontMotorName;
+    public boolean getLeftFrontMotorInverted() {
+        return leftFrontMotorInverted;
     }
 
-    public void setLeftFrontMotorName(String leftFrontMotorName) {
-        this.leftFrontMotorName = leftFrontMotorName;
+    public void setLeftFrontMotorInverted(boolean leftFrontMotorInverted) {
+        this.leftFrontMotorInverted = leftFrontMotorInverted;
     }
 
-    public String getLeftRearMotorName() {
-        return leftRearMotorName;
+    public boolean  getLeftRearMotorInverted() {
+        return leftRearMotorInverted;
     }
 
-    public void setLeftRearMotorName(String leftRearMotorName) {
-        this.leftRearMotorName = leftRearMotorName;
+    public void setLeftRearMotorInverted(boolean leftRearMotorInverted) {
+        this.leftRearMotorInverted = leftRearMotorInverted;
     }
 
-    public String getRightFrontMotorName() {
-        return rightFrontMotorName;
+    public boolean getRightFrontMotorInverted() {
+        return rightFrontMotorInverted;
     }
 
-    public void setRightFrontMotorName(String rightFrontMotorName) {
-        this.rightFrontMotorName = rightFrontMotorName;
+    public void setRightFrontMotorInverted(boolean rightFrontMotorInverted) {
+        this.rightFrontMotorInverted = rightFrontMotorInverted;
     }
 
-    public String getRightRearMotorName() {
-        return rightRearMotorName;
+    public boolean getRightRearMotorInverted() {
+        return rightRearMotorInverted;
     }
 
-    public void setRightRearMotorName(String rightRearMotorName) {
-        this.rightRearMotorName = rightRearMotorName;
-    }
-
-    public DcMotorSimple.Direction getLeftFrontMotorDirection() {
-        return leftFrontMotorDirection;
-    }
-
-    public void setLeftFrontMotorDirection(DcMotorSimple.Direction leftFrontMotorDirection) {
-        this.leftFrontMotorDirection = leftFrontMotorDirection;
-    }
-
-    public DcMotorSimple.Direction getLeftRearMotorDirection() {
-        return leftRearMotorDirection;
-    }
-
-    public void setLeftRearMotorDirection(DcMotorSimple.Direction leftRearMotorDirection) {
-        this.leftRearMotorDirection = leftRearMotorDirection;
-    }
-
-    public DcMotorSimple.Direction getRightFrontMotorDirection() {
-        return rightFrontMotorDirection;
-    }
-
-    public void setRightFrontMotorDirection(DcMotorSimple.Direction rightFrontMotorDirection) {
-        this.rightFrontMotorDirection = rightFrontMotorDirection;
-    }
-
-    public DcMotorSimple.Direction getRightRearMotorDirection() {
-        return rightRearMotorDirection;
-    }
-
-    public void setRightRearMotorDirection(DcMotorSimple.Direction rightRearMotorDirection) {
-        this.rightRearMotorDirection = rightRearMotorDirection;
+    public void setRightRearMotorInverted(boolean rightRearMotorInverted) {
+        this.rightRearMotorInverted = rightRearMotorInverted;
     }
 
     public double getMotorCachingThreshold() {
@@ -241,14 +184,10 @@ public class MecanumConstants {
         convertToPolar = Pose.cartesianToPolar(xVelocity, -yVelocity);
         frontLeftVector = new Vector(convertToPolar[0], convertToPolar[1]).normalize();
         maxPower = 1;
-        leftFrontMotorName = "leftFront";
-        leftRearMotorName = "leftRear";
-        rightFrontMotorName = "rightFront";
-        rightRearMotorName = "rightRear";
-        leftFrontMotorDirection = DcMotorSimple.Direction.REVERSE;
-        leftRearMotorDirection = DcMotorSimple.Direction.REVERSE;
-        rightFrontMotorDirection = DcMotorSimple.Direction.FORWARD;
-        rightRearMotorDirection = DcMotorSimple.Direction.FORWARD;
+        leftFrontMotorInverted = true;
+        leftRearMotorInverted = true;
+        rightFrontMotorInverted = false;
+        rightRearMotorInverted = false;
         motorCachingThreshold = 0.01;
         useBrakeModeInTeleOp = false;
         useVoltageCompensation = false;
