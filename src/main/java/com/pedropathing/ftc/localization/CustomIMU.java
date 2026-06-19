@@ -1,13 +1,14 @@
 package com.pedropathing.ftc.localization;
 
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
-import com.qualcomm.robotcore.hardware.HardwareMap;
+// import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+// import com.qualcomm.robotcore.hardware.HardwareMap;
 
 public interface CustomIMU {
+    // TODO: Not sure what the right base interface is
     /**
      * Initializes the IMU using the hardwareMap and hubOrientation.
      */
-    void initialize(HardwareMap hardwareMap, String hardwareMapName, RevHubOrientationOnRobot hubOrientation);
+    void initialize(/*HardwareMap hardwareMap, String hardwareMapName, RevHubOrientationOnRobot hubOrientation*/);
 
     /**
      * Gets the IMU's reading for the heading of the robot in radians
