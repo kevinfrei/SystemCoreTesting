@@ -1,10 +1,9 @@
 package com.pedropathing.ftc.localization.constants;
 
-import org.wpilib.hardware.imu.OnboardIMU;
-
 import com.pedropathing.ftc.localization.CustomIMU;
 import com.pedropathing.ftc.localization.SystemCoreEncoder;
 import com.pedropathing.ftc.localization.SystemCoreIMU;
+import org.wpilib.hardware.imu.OnboardIMU;
 
 /**
  * This is the ThreeWheelIMUConstants class. It holds many constants and parameters for the Three Wheel + IMU Localizer.
@@ -43,7 +42,7 @@ public class ThreeWheelIMUConstants {
      * cuz students regularly mount stuff in weird orientations because 18"^3 is a
      * fun design challenge :)
      *  */
-    public OnboardIMU.MountOrientation IMU_Orientation =  OnboardIMU.MountOrientation.FLAT;
+    public OnboardIMU.MountOrientation IMU_Orientation = OnboardIMU.MountOrientation.FLAT;
 
     /** The direction of the Left Encoder
      * Default Value: Encoder.REVERSE */
@@ -56,11 +55,6 @@ public class ThreeWheelIMUConstants {
     /** The direction of the Strafe Encoder
      * Default Value: Encoder.FORWARD */
     public double strafeEncoderDirection = SystemCoreEncoder.FORWARD;
-
-    /**
-     * This is the IMU that will be used for localization.
-     */
-    public CustomIMU imu = new SystemCoreIMU();
 
     /**
      * This creates a new ThreeWheelIMUConstants with default values.
@@ -119,11 +113,6 @@ public class ThreeWheelIMUConstants {
         return this;
     }
 
-    public ThreeWheelIMUConstants customIMU(CustomIMU customIMU) {
-        this.imu = customIMU;
-        return this;
-    }
-
     public void defaults() {
         forwardTicksToInches = .001989436789;
         strafeTicksToInches = .001989436789;
@@ -135,7 +124,5 @@ public class ThreeWheelIMUConstants {
         leftEncoderDirection = SystemCoreEncoder.REVERSE;
         rightEncoderDirection = SystemCoreEncoder.REVERSE;
         strafeEncoderDirection = SystemCoreEncoder.FORWARD;
-        // TODO:KBF Need to factor this out somehow
-        imu = new SystemCoreIMU();
     }
 }

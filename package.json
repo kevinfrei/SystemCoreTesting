@@ -1,0 +1,59 @@
+{
+  "name": "ftc-maintenance-sripts",
+  "repository": "https://github.com/technototes/Decode2025.git",
+  "author": "Kevin Frei <kevinfrei@hotmail.com>",
+  "license": "CC0-1.0",
+  "type": "module",
+  "scripts": {
+    "- // a-": "",
+    "- // a ": "These are all for building 'stuff':",
+    "- // a+": "",
+    "build": "bun run gradle build",
+    "full": "bun run gradle build",
+    "- // b-": "",
+    "- // b ": "These scripts are for formatting code/scripts/markdown stuff:",
+    "- // b+": "",
+    "format": "tools format bun",
+    "foramt": "tools format bun",
+    "force-format": "prettier -w \"Twenty403/**/*.java\" \"Sixteen750/**/*.java\" \"Blackbird/**/*.java\" \"scripts/**/*.ts*\"",
+    "- // c-": "",
+    "- // c ": "platform-specific commands",
+    "- // c+": "",
+    "gradle": "./gradlew",
+    "open": "bun run os open",
+    "open:win": "cmd /c start \"\"",
+    "open:mac": "open",
+    "open:lin": "xdg-open",
+    "- // y-": "",
+    "- // y ": "This runs a different script per os (run-script-os isn't bun-compatible)",
+    "- // y+": "",
+    "os": "bun run scripts/os.ts",
+    "- // z-": "",
+    "- // z ": "Type check the scripts (BUG: It's typechecking node_modules too!)",
+    "types": "tsc --noEmit -p tsconfig.json",
+    "- //": "Make the git hook(s) work",
+    "prepare": "bunx simple-git-hooks"
+  },
+  "dependencies": {
+    "@freik/containers": "^0.4.4",
+    "@freik/typechk": "^0.9.0",
+    "@freik/workspace": "^0.8.1",
+    "prettier": "^3.7.4",
+    "prettier-plugin-java": "^2.7.7",
+    "prettier-plugin-organize-imports": "^4.3.0",
+    "pretty-quick": "^4.2.2",
+    "simple-git": "^3.30.0",
+    "simple-git-hooks": "^2.13.1",
+    "typescript": "^6.0.3"
+  },
+  "devDependencies": {
+    "@types/bun": "1.3.14"
+  },
+  "private": false,
+  "simple-git-hooks": {
+    "pre-commit": "bunx lint-staged"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,java}": ["prettier --write"]
+  }
+}

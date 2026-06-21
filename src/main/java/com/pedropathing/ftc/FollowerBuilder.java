@@ -1,4 +1,5 @@
 package com.pedropathing.ftc;
+
 import com.pedropathing.drivetrain.Drivetrain;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.follower.FollowerConstants;
@@ -24,12 +25,14 @@ import com.revrobotics.spark.A301;
 import org.wpilib.hardware.expansionhub.ExpansionHubMotor;
 import org.wpilib.hardware.rotation.Encoder;
 
-/** This is the FollowerBuilder.
+/**
+ * This is the FollowerBuilder.
  * It is used to create Followers with a specific drivetrain + localizer without having to use a full constructor
  *
  * @author Baron Henderson - 20077 The Indubitables
  */
 public class FollowerBuilder {
+
     private final FollowerConstants constants;
     private PathConstraints constraints;
     private Localizer localizer;
@@ -45,12 +48,36 @@ public class FollowerBuilder {
         return this;
     }
 
-    public FollowerBuilder driveEncoderLocalizer(A301 lf, A301 lr, A301 rr, A301 rf, DriveEncoderConstants lConstants) {
+    public FollowerBuilder driveEncoderLocalizer(
+        A301 lf,
+        A301 lr,
+        A301 rr,
+        A301 rf,
+        DriveEncoderConstants lConstants
+    ) {
         return setLocalizer(new DriveEncoderLocalizer(lf, lr, rr, rf, lConstants));
     }
-    public FollowerBuilder driveEncoderLocalizer(ExpansionHubMotor lf, ExpansionHubMotor lr, ExpansionHubMotor rr, ExpansionHubMotor rf, DriveEncoderConstants lConstants) {
+
+    public FollowerBuilder driveEncoderLocalizer(
+        ExpansionHubMotor lf,
+        ExpansionHubMotor lr,
+        ExpansionHubMotor rr,
+        ExpansionHubMotor rf,
+        DriveEncoderConstants lConstants
+    ) {
         return setLocalizer(new DriveEncoderLocalizer(lf, lr, rr, rf, lConstants));
     }
+
+    public FollowerBuilder driveEncoderLocalizer(
+        com.pedropathing.ftc.localization.Encoder lf,
+        com.pedropathing.ftc.localization.Encoder lr,
+        com.pedropathing.ftc.localization.Encoder rr,
+        com.pedropathing.ftc.localization.Encoder rf,
+        DriveEncoderConstants lConstants
+    ) {
+        return setLocalizer(new DriveEncoderLocalizer(lf, lr, rr, rf, lConstants));
+    }
+
     /*
     public FollowerBuilder octoQuadLocalizer(OctoQuadConstants lConstants, OctoQuadLocalizer.InitMode initMode) {
         return setLocalizer(new OctoQuadLocalizer(hardwareMap, lConstants, initMode));
@@ -64,27 +91,68 @@ public class FollowerBuilder {
         return setLocalizer(new PinpointLocalizer(hardwareMap, lConstants));
     }
     */
-    public FollowerBuilder threeWheelIMULocalizer(ExpansionHubMotor lEnc, ExpansionHubMotor rEnc, ExpansionHubMotor strafeEnc, CustomIMU imu, ThreeWheelIMUConstants lConstants) {
+    public FollowerBuilder threeWheelIMULocalizer(
+        ExpansionHubMotor lEnc,
+        ExpansionHubMotor rEnc,
+        ExpansionHubMotor strafeEnc,
+        CustomIMU imu,
+        ThreeWheelIMUConstants lConstants
+    ) {
         return setLocalizer(new ThreeWheelIMULocalizer(lEnc, rEnc, strafeEnc, imu, lConstants));
     }
 
-    public FollowerBuilder threeWheelIMULocalizer(Encoder lEnc, Encoder rEnc, Encoder strafeEnc, CustomIMU imu, ThreeWheelIMUConstants lConstants) {
+    public FollowerBuilder threeWheelIMULocalizer(
+        Encoder lEnc,
+        Encoder rEnc,
+        Encoder strafeEnc,
+        CustomIMU imu,
+        ThreeWheelIMUConstants lConstants
+    ) {
         return setLocalizer(new ThreeWheelIMULocalizer(lEnc, rEnc, strafeEnc, imu, lConstants));
     }
 
-    public FollowerBuilder threeWheelLocalizer(ExpansionHubMotor lEnc, ExpansionHubMotor rEnc, ExpansionHubMotor strafeEnc, ThreeWheelConstants lConstants) {
+    public FollowerBuilder threeWheelLocalizer(
+        ExpansionHubMotor lEnc,
+        ExpansionHubMotor rEnc,
+        ExpansionHubMotor strafeEnc,
+        ThreeWheelConstants lConstants
+    ) {
         return setLocalizer(new ThreeWheelLocalizer(lEnc, rEnc, strafeEnc, lConstants));
     }
 
-    public FollowerBuilder threeWheelLocalizer(Encoder lEnc, Encoder rEnc, Encoder strafeEnc, ThreeWheelConstants lConstants) {
+    public FollowerBuilder threeWheelLocalizer(
+        Encoder lEnc,
+        Encoder rEnc,
+        Encoder strafeEnc,
+        ThreeWheelConstants lConstants
+    ) {
         return setLocalizer(new ThreeWheelLocalizer(lEnc, rEnc, strafeEnc, lConstants));
     }
 
-    public FollowerBuilder twoWheelLocalizer(ExpansionHubMotor fwdEnc, ExpansionHubMotor strafeEnc, CustomIMU imu, TwoWheelConstants lConstants) {
+    public FollowerBuilder twoWheelLocalizer(
+        ExpansionHubMotor fwdEnc,
+        ExpansionHubMotor strafeEnc,
+        CustomIMU imu,
+        TwoWheelConstants lConstants
+    ) {
         return setLocalizer(new TwoWheelLocalizer(fwdEnc, strafeEnc, imu, lConstants));
     }
 
-    public FollowerBuilder twoWheelLocalizer(Encoder fwdEnc, Encoder strafeEnc, CustomIMU imu, TwoWheelConstants lConstants) {
+    public FollowerBuilder twoWheelLocalizer(
+        Encoder fwdEnc,
+        Encoder strafeEnc,
+        CustomIMU imu,
+        TwoWheelConstants lConstants
+    ) {
+        return setLocalizer(new TwoWheelLocalizer(fwdEnc, strafeEnc, imu, lConstants));
+    }
+
+    public FollowerBuilder twoWheelLocalizer(
+        com.pedropathing.ftc.localization.Encoder fwdEnc,
+        com.pedropathing.ftc.localization.Encoder strafeEnc,
+        CustomIMU imu,
+        TwoWheelConstants lConstants
+    ) {
         return setLocalizer(new TwoWheelLocalizer(fwdEnc, strafeEnc, imu, lConstants));
     }
 
@@ -93,11 +161,33 @@ public class FollowerBuilder {
         return this;
     }
 
-    public FollowerBuilder mecanumDrivetrain(A301 lf, A301 lr, A301 rr, A301 rf, MecanumConstants mecanumConstants) {
+    public FollowerBuilder mecanumDrivetrain(
+        A301 lf,
+        A301 lr,
+        A301 rr,
+        A301 rf,
+        MecanumConstants mecanumConstants
+    ) {
         return setDrivetrain(new Mecanum(lf, lr, rr, rf, mecanumConstants));
     }
 
-    public FollowerBuilder mecanumDrivetrain(ExpansionHubMotor lf, ExpansionHubMotor lr, ExpansionHubMotor rr, ExpansionHubMotor rf, MecanumConstants mecanumConstants) {
+    public FollowerBuilder mecanumDrivetrain(
+        ExpansionHubMotor lf,
+        ExpansionHubMotor lr,
+        ExpansionHubMotor rr,
+        ExpansionHubMotor rf,
+        MecanumConstants mecanumConstants
+    ) {
+        return setDrivetrain(new Mecanum(lf, lr, rr, rf, mecanumConstants));
+    }
+
+    public FollowerBuilder mecanumDrivetrain(
+        Motor lf,
+        Motor lr,
+        Motor rr,
+        Motor rf,
+        MecanumConstants mecanumConstants
+    ) {
         return setDrivetrain(new Mecanum(lf, lr, rr, rf, mecanumConstants));
     }
 

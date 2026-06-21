@@ -2,7 +2,15 @@ package com.pedropathing.ftc.localization;
 
 // KBF- TODO: Implement this from the SystmeCore API
 
-public class    SystemCoreIMU implements  CustomIMU {
+import org.wpilib.hardware.imu.OnboardIMU;
+
+public class SystemCoreIMU implements CustomIMU {
+
+    private final OnboardIMU imu;
+
+    public SystemCoreIMU(OnboardIMU IMU) {
+        imu = IMU;
+    }
 
     /**
      * Old version did this:
@@ -14,7 +22,7 @@ public class    SystemCoreIMU implements  CustomIMU {
      */
     @Override
     public void initialize() {
-
+        imu.resetYaw();
     }
 
     /**
@@ -23,7 +31,7 @@ public class    SystemCoreIMU implements  CustomIMU {
      */
     @Override
     public double getHeading() {
-        return 0;
+        return imu.getYawRadians();
     }
 
     /**
@@ -31,6 +39,6 @@ public class    SystemCoreIMU implements  CustomIMU {
      */
     @Override
     public void resetYaw() {
-
+        imu.resetYaw();
     }
 }
