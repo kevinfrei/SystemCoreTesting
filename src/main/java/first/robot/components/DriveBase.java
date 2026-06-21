@@ -1,7 +1,6 @@
 package first.robot.components;
 
 import com.pedropathing.control.FilteredPIDFCoefficients;
-import com.pedropathing.control.PredictiveBrakingCoefficients;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.follower.FollowerConstants;
 import com.pedropathing.ftc.FollowerBuilder;
@@ -15,8 +14,8 @@ import com.pedropathing.ftc.localization.HubEncoder;
 import com.pedropathing.ftc.localization.constants.DriveEncoderConstants;
 import com.pedropathing.ftc.localization.constants.TwoWheelConstants;
 import com.pedropathing.paths.PathConstraints;
+import com.revrobotics.spark.A301;
 import first.robot.Robot;
-import java.io.InvalidClassException;
 import org.wpilib.command2.SubsystemBase;
 import org.wpilib.driverstation.Gamepad;
 import org.wpilib.hardware.hal.CANBusMap;
@@ -319,6 +318,100 @@ public class DriveBase {
             double rotate = g.getRightX();
             System.out.printf("F: %f, S: %f, R: %f%n", fwd, strafe, rotate);
             f.setTeleOpDrive(fwd, strafe, rotate);
+        }
+    }
+
+    @Teleop(name = "Dumb Drive")
+    public static class DriveBaseDumb implements OpMode {
+
+        Gamepad g;
+        A301 fl, fr, rr, rl;
+
+        public DriveBaseDumb(Robot robot) {
+            fl = robot.frontLeft;
+            fr = robot.frontRight;
+            rr = robot.rearRight;
+            rl = robot.rearLeft;
+            g = robot.gamepad;
+        }
+
+        public void start() {
+            fl.setInverted(true);
+            fr.setInverted(true);
+            rl.setInverted(false);
+            rr.setInverted(false);
+        }
+
+        public void periodic() {
+            double fwd = -g.getLeftY();
+            double strafe = g.getLeftX();
+            double rotate = g.getRightX();
+            System.out.printf("F: %f, S: %f, R: %f%n", fwd, strafe, rotate);
+            if (Math.abs(fwd) >= Math.abs(strafe) && Math.abs(fwd) >= Math.abs(rotate)) {
+                setPower(fwd, fwd, fwd, fwd);
+            } else if (Math.abs(strafe) >= Math.abs(fwd) && Math.abs(strafe) >= Math.abs(rotate)) {
+                setPower(strafe, -strafe, -strafe, strafe);
+            } else {
+                setPower(rotate, rotate, -rotate, -rotate);
+            }
+        }
+
+        private void setPower(double pfl, double pfr, double prr, double prl) {
+            fl.setThrottle(pfl);
+            fr.setThrottle(pfr);
+            rr.setThrottle(prr);
+            rl.setThrottle(prl);
+        }
+
+        public void end() {
+            setPower(0, 0, 0, 0);
+        }
+    }
+
+    @Teleop(name = "Trig Drive")
+    public static class DriveBaseTrig implements OpMode {
+
+        Gamepad g;
+        A301 fl, fr, rr, rl;
+
+        public DriveBaseTrig(Robot robot) {
+            fl = robot.frontLeft;
+            fr = robot.frontRight;
+            rr = robot.rearRight;
+            rl = robot.rearLeft;
+            g = robot.gamepad;
+        }
+
+        public void start() {
+            fl.setInverted(true);
+            fr.setInverted(true);
+            rl.setInverted(false);
+            rr.setInverted(false);
+        }
+
+        public void periodic() {
+            double f = -g.getLeftY();
+            double s = g.getLeftX();
+            double rot = g.getRightX();
+            double r = Math.hypot(s, -f);
+            double robotAngle = Math.atan2(-f, s) - Math.PI / 4;
+            double rightX = rot;
+            double v1 = r * Math.cos(robotAngle) + rightX;
+            double v2 = r * Math.sin(robotAngle) - rightX;
+            double v3 = r * Math.sin(robotAngle) + rightX;
+            double v4 = r * Math.cos(robotAngle) - rightX;
+            setPower(v1, v2, v3, v4);
+        }
+
+        private void setPower(double pfl, double pfr, double prr, double prl) {
+            fl.setThrottle(pfl);
+            fr.setThrottle(pfr);
+            rr.setThrottle(prr);
+            rl.setThrottle(prl);
+        }
+
+        public void end() {
+            setPower(0, 0, 0, 0);
         }
     }
 }

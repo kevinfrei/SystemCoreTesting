@@ -14,7 +14,6 @@ import org.wpilib.opmode.PeriodicOpMode;
 @Autonomous(name = "Looping 50ms Auto", group = "Group 1")
 public class MyAuto extends PeriodicOpMode {
 
-    private final Robot robot;
     private Instant time;
     private double curNum;
     private double delta;
@@ -25,7 +24,6 @@ public class MyAuto extends PeriodicOpMode {
 
     /** The Robot instance is passed into the opmode via the constructor. */
     public MyAuto(Robot robot) {
-        this.robot = robot;
         this.time = Instant.now();
         this.curNum = 0.0;
         this.delta = 0.025;
