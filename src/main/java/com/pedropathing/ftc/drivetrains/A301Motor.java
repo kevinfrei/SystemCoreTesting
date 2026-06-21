@@ -1,11 +1,13 @@
 package com.pedropathing.ftc.drivetrains;
 
 import com.revrobotics.spark.A301;
+import org.jspecify.annotations.NonNull;
 
 public class A301Motor implements Motor {
+
     private final A301 motor;
 
-    public A301Motor(A301 hardware) {
+    public A301Motor(@NonNull A301 hardware) {
         motor = hardware;
     }
 
@@ -22,5 +24,10 @@ public class A301Motor implements Motor {
     @Override
     public void setZeroBraking(boolean shouldBrake) {
         // TODO: This isn't supported via the A301 API today
+    }
+
+    @NonNull
+    public A301 getRaw() {
+        return motor;
     }
 }

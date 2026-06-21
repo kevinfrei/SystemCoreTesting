@@ -3,8 +3,10 @@ package com.pedropathing.ftc.drivetrains;
 import org.wpilib.hardware.expansionhub.ExpansionHubMotor;
 
 public class HubMotor implements Motor {
+
     ExpansionHubMotor motor;
     double mult;
+
     public HubMotor(ExpansionHubMotor m) {
         motor = m;
         mult = 1;
@@ -23,5 +25,9 @@ public class HubMotor implements Motor {
     @Override
     public void setZeroBraking(boolean shouldBrake) {
         motor.setFloatOn0(!shouldBrake);
+    }
+
+    public ExpansionHubMotor getRaw() {
+        return motor;
     }
 }

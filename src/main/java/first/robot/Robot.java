@@ -18,6 +18,7 @@ import org.wpilib.framework.OpModeRobot;
 import org.wpilib.hardware.imu.OnboardIMU;
 import org.wpilib.hardware.rotation.Encoder;
 import totes.FourWheelDriveBase;
+import totes.TwoWheelOdo;
 
 /**
  * The methods in this class are called automatically as described in the OpModeRobot documentation.
@@ -26,20 +27,20 @@ import totes.FourWheelDriveBase;
  * or the package after creating this project, you must also update the Main.java file in the
  * project.
  */
-public class Robot extends OpModeRobot implements FourWheelDriveBase {
+public class Robot extends OpModeRobot implements FourWheelDriveBase /*, TwoWheelOdo*/ {
 
     public final A301 frontLeft = new A301(DriveBase.Config.flPort);
     public final A301 frontRight = new A301(DriveBase.Config.frPort);
     public final A301 rearRight = new A301(DriveBase.Config.rrPort);
     public final A301 rearLeft = new A301(DriveBase.Config.rlPort);
-    public final Encoder fwdEncoder = new Encoder(
+    /*public final Encoder fwdEncoder = new Encoder(
         DriveBase.Config.fbEncCh0,
         DriveBase.Config.fbEncCh1
     );
     public final Encoder strafEncoder = new Encoder(
         DriveBase.Config.strafeEncCh0,
         DriveBase.Config.strafeEncCh1
-    );
+    );*/
     public final OnboardIMU imu = new OnboardIMU(OnboardIMU.MountOrientation.LANDSCAPE);
 
     // Backing for the 4wdb interface
@@ -50,10 +51,11 @@ public class Robot extends OpModeRobot implements FourWheelDriveBase {
         new A301Motor(rearLeft),
     };
     // 2 for 2 wheel odo, 4 for 'use the drive encoders'. Let's hope we can attach odo;
-    private final com.pedropathing.ftc.localization.Encoder[] encoders = {
+    /*private final com.pedropathing.ftc.localization.Encoder[] encoders = {
         new SystemCoreEncoder(fwdEncoder),
         new SystemCoreEncoder(strafEncoder),
     };
+    */
     private final CustomIMU imu4drivebase = new SystemCoreIMU(imu);
 
     public final Gamepad gamepad = new Gamepad(0);
@@ -86,12 +88,14 @@ public class Robot extends OpModeRobot implements FourWheelDriveBase {
         return motors;
     }
 
+    /* 
     @Override
     public com.pedropathing.ftc.localization.Encoder[] getEncoders() {
         return encoders;
     }
+    */
 
-    @Override
+    // @Override
     @NonNull
     public CustomIMU getIMU() {
         return imu4drivebase;

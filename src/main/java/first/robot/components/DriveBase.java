@@ -1,20 +1,31 @@
 package first.robot.components;
 
 import com.pedropathing.control.FilteredPIDFCoefficients;
+import com.pedropathing.control.PredictiveBrakingCoefficients;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.follower.FollowerConstants;
 import com.pedropathing.ftc.FollowerBuilder;
+import com.pedropathing.ftc.drivetrains.A301Motor;
+import com.pedropathing.ftc.drivetrains.HubMotor;
 import com.pedropathing.ftc.drivetrains.MecanumConstants;
 import com.pedropathing.ftc.drivetrains.Motor;
+import com.pedropathing.ftc.localization.A301Encoder;
 import com.pedropathing.ftc.localization.Encoder;
+import com.pedropathing.ftc.localization.HubEncoder;
 import com.pedropathing.ftc.localization.constants.DriveEncoderConstants;
 import com.pedropathing.ftc.localization.constants.TwoWheelConstants;
 import com.pedropathing.paths.PathConstraints;
+import first.robot.Robot;
+import java.io.InvalidClassException;
 import org.wpilib.command2.SubsystemBase;
+import org.wpilib.driverstation.Gamepad;
 import org.wpilib.hardware.hal.CANBusMap;
 import org.wpilib.hardware.hal.util.AllocationException;
 import org.wpilib.hardware.imu.OnboardIMU;
+import org.wpilib.opmode.OpMode;
+import org.wpilib.opmode.Teleop;
 import totes.FourWheelDriveBase;
+import totes.TwoWheelOdo;
 
 public class DriveBase {
 
@@ -98,15 +109,39 @@ public class DriveBase {
         public static double acceptableHeading = 2.5;
 
         public static FollowerConstants getFollowerConstants() {
-            return null;
+            return new FollowerConstants()
+                .mass(botWeightKg)
+                .forwardZeroPowerAcceleration(forwardDeceleration)
+                .lateralZeroPowerAcceleration(lateralDeceleration)
+                .holdPointTranslationalScaling(1)
+                .headingPIDFCoefficients(headingPID)
+                .drivePIDFCoefficients(drivePID)
+                .translationalPIDFCoefficients(translationPID)
+                .centripetalScaling(centripetalScale);
         }
 
         public static PathConstraints getPathConstraints() {
-            return null;
+            PathConstraints pc = new PathConstraints(
+                tValueContraint,
+                timeoutConstraint,
+                brakingStrength,
+                brakingStart
+            );
+            pc.setVelocityConstraint(acceptableVelocity);
+            pc.setTranslationalConstraint(acceptableDistance);
+            pc.setHeadingConstraint(Math.toRadians(acceptableHeading));
+            return pc;
         }
 
         public static MecanumConstants getDriveConstants() {
-            return null;
+            return new MecanumConstants()
+                .maxPower(1)
+                .leftFrontMotorInverted(true)
+                .leftRearMotorInverted(true)
+                .rightFrontMotorInverted(false)
+                .rightRearMotorInverted(false)
+                .xVelocity(xVelocity)
+                .yVelocity(yVelocity);
         }
 
         public static class Localizer {
@@ -173,16 +208,28 @@ public class DriveBase {
     protected static FourWheelDriveBase fwdb = null;
     protected static Follower follower = null;
 
+    // No encoders connected: Just use the 4wdb odo, too
     protected static Follower createFollower(FourWheelDriveBase fwdb) {
         if (follower == null) {
-            if (fwdb != null && fwdb != DriveBase.fwdb) {
+            if (DriveBase.fwdb != null && fwdb != DriveBase.fwdb) {
                 throw new AllocationException(
                     "Attempt to create a second follower for the singleton drivebase with a different FWDB"
                 );
             }
             Motor[] motors = fwdb.getMotors();
-            Encoder[] encoders = fwdb.getEncoders();
-            FollowerBuilder fb = new FollowerBuilder(Config.getFollowerConstants())
+            Encoder[] encs = new Encoder[4];
+            if (motors[0] instanceof A301Motor) {
+                for (int i = 0; i < 4; i++) {
+                    encs[i] = new A301Encoder(((A301Motor) motors[i]).getRaw());
+                }
+            } else if (motors[0] instanceof HubMotor) {
+                for (int i = 0; i < 4; i++) {
+                    encs[i] = new HubEncoder(((HubMotor) motors[i]).getRaw());
+                }
+            } else {
+                throw new AllocationException("Motors doesn't appear to be an A301 or Hub motor");
+            }
+            Follower f = new FollowerBuilder(Config.getFollowerConstants())
                 .pathConstraints(Config.getPathConstraints())
                 .mecanumDrivetrain(
                     motors[0],
@@ -190,36 +237,54 @@ public class DriveBase {
                     motors[2],
                     motors[3],
                     Config.getDriveConstants()
-                );
-            switch (Config.Localizer.WhichLocalizer) {
-                case USE_MOTORS:
-                    if (encoders == null || encoders.length != 4) {
-                        throw new IllegalArgumentException(
-                            "Invalid encoders for using the MOTORS Localizer"
-                        );
-                    }
-                    fb = fb.driveEncoderLocalizer(
-                        encoders[0],
-                        encoders[1],
-                        encoders[2],
-                        encoders[3],
-                        Config.Localizer.getDriveEncoderConstants()
-                    );
-                    break;
-                case USE_TWO_WHEEL:
-                    fb = fb.twoWheelLocalizer(
-                        encoders[0],
-                        encoders[1],
-                        fwdb.getIMU(),
-                        Config.Localizer.getTwoWheelConstants()
-                    );
-                    break;
-            }
-            Follower f = fb.build();
+                )
+                .driveEncoderLocalizer(
+                    encs[0],
+                    encs[1],
+                    encs[2],
+                    encs[3],
+                    Config.Localizer.getDriveEncoderConstants()
+                )
+                .build();
             f.setMaxPowerScaling(Config.AUTO_SPEED);
             follower = f;
         }
         return follower;
+    }
+
+    protected static Follower createFollower(FourWheelDriveBase fwdb, TwoWheelOdo two) {
+        if (follower == null) {
+            if (fwdb != null && fwdb != DriveBase.fwdb) {
+                throw new AllocationException(
+                    "Attempt to create a second follower for the singleton drivebase with a different FWDB"
+                );
+            }
+            Motor[] motors = fwdb.getMotors();
+            Encoder[] encoders = two.getEncoders();
+            Follower f = new FollowerBuilder(Config.getFollowerConstants())
+                .pathConstraints(Config.getPathConstraints())
+                .mecanumDrivetrain(
+                    motors[0],
+                    motors[1],
+                    motors[2],
+                    motors[3],
+                    Config.getDriveConstants()
+                )
+                .twoWheelLocalizer(
+                    encoders[0],
+                    encoders[1],
+                    two.getIMU(),
+                    Config.Localizer.getTwoWheelConstants()
+                )
+                .build();
+            f.setMaxPowerScaling(Config.AUTO_SPEED);
+            follower = f;
+        }
+        return follower;
+    }
+
+    public static Follower getFollower(FourWheelDriveBase fwdb, TwoWheelOdo two) {
+        return createFollower(fwdb, two);
     }
 
     public static Follower getFollower(FourWheelDriveBase fwdb) {
@@ -228,8 +293,32 @@ public class DriveBase {
 
     public static class Component extends SubsystemBase {
 
-        public Component(FourWheelDriveBase fwdb) {
+        public Component(FourWheelDriveBase fwdb, TwoWheelOdo two) {
             super("Drive Base");
+        }
+    }
+
+    @Teleop(name = "PedroTele")
+    public static class DriveBaseValidation implements OpMode {
+
+        Follower f;
+        Gamepad g;
+
+        public DriveBaseValidation(Robot robot) {
+            f = robot.follower;
+            g = robot.gamepad;
+        }
+
+        public void start() {
+            f.startTeleOpDrive(false);
+        }
+
+        public void periodic() {
+            double fwd = -g.getLeftY();
+            double strafe = g.getLeftX();
+            double rotate = g.getRightX();
+            System.out.printf("F: %f, S: %f, R: %f%n", fwd, strafe, rotate);
+            f.setTeleOpDrive(fwd, strafe, rotate);
         }
     }
 }

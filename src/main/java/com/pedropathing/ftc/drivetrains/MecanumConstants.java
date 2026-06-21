@@ -4,31 +4,32 @@ import com.pedropathing.geometry.Pose;
 import com.pedropathing.math.Vector;
 
 public class MecanumConstants {
+
     /** The Forward Velocity of the Robot - Different for each robot
      *  Default Value: 81.34056 */
-    public  double xVelocity = 81.34056;
+    public double xVelocity = 81.34056;
 
     /** The Lateral Velocity of the Robot - Different for each robot
      *  Default Value: 65.43028 */
-    public  double yVelocity = 65.43028;
+    public double yVelocity = 65.43028;
 
-    private  double[] convertToPolar = Pose.cartesianToPolar(xVelocity, -yVelocity);
+    private double[] convertToPolar = Pose.cartesianToPolar(xVelocity, -yVelocity);
 
     /** The actual drive vector for the front left wheel, if the robot is facing a heading of 0 radians with the wheel centered at (0,0)
      *  Default Value: new Vector(convertToPolar[0], convertToPolar[1])
      * @implNote This vector should not be changed, but only accessed.
      */
-    public  Vector frontLeftVector = new Vector(convertToPolar[0], convertToPolar[1]).normalize();
-    public  double maxPower = 1;
-    public  boolean leftFrontMotorInverted = true;
-    public  boolean leftRearMotorInverted = true;
-    public  boolean rightFrontMotorInverted = false;
-    public  boolean rightRearMotorInverted = false;
-    public  double motorCachingThreshold = 0.01;
-    public  boolean useBrakeModeInTeleOp = false;
-    public  boolean useVoltageCompensation = false;
-    public  double nominalVoltage = 12.0;
-    public  double staticFrictionCoefficient = 0.1;
+    public Vector frontLeftVector = new Vector(convertToPolar[0], convertToPolar[1]).normalize();
+    public double maxPower = 1;
+    public boolean leftFrontMotorInverted = true;
+    public boolean leftRearMotorInverted = true;
+    public boolean rightFrontMotorInverted = false;
+    public boolean rightRearMotorInverted = false;
+    public double motorCachingThreshold = 0.01;
+    public boolean useBrakeModeInTeleOp = false;
+    public boolean useVoltageCompensation = false;
+    public double nominalVoltage = 12.0;
+    public double staticFrictionCoefficient = 0.1;
 
     public MecanumConstants() {
         defaults();
@@ -64,7 +65,7 @@ public class MecanumConstants {
         return this;
     }
 
-    public MecanumConstants rightRearMotorDirection(boolean rightRearMotorDirection) {
+    public MecanumConstants rightRearMotorInverted(boolean rightRearMotorDirection) {
         this.rightRearMotorInverted = rightRearMotorDirection;
         return this;
     }
@@ -134,7 +135,7 @@ public class MecanumConstants {
         this.leftFrontMotorInverted = leftFrontMotorInverted;
     }
 
-    public boolean  getLeftRearMotorInverted() {
+    public boolean getLeftRearMotorInverted() {
         return leftRearMotorInverted;
     }
 
