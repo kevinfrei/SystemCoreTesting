@@ -1,6 +1,6 @@
 {
   "name": "ftc-maintenance-sripts",
-  "repository": "https://github.com/technototes/Decode2025.git",
+  "repository": "https://github.com/kevinfrei/A301-test",
   "author": "Kevin Frei <kevinfrei@hotmail.com>",
   "license": "CC0-1.0",
   "type": "module",
@@ -51,7 +51,8 @@
   },
   "private": false,
   "simple-git-hooks": {
-    "pre-commit": "bunx lint-staged"
+    "pre-commit": "bunx lint-staged",
+    "pre-push": "bun run full"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json,java}": ["prettier --write"]

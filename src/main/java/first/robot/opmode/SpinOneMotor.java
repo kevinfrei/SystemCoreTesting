@@ -11,6 +11,7 @@ import org.wpilib.opmode.Teleop;
 @Teleop(name = "Spin One Motor")
 public class SpinOneMotor extends PeriodicOpMode {
 
+    private static double STEP = 0.015625;
     private final Robot robot;
     private double throttle = 0.0;
 
@@ -27,16 +28,19 @@ public class SpinOneMotor extends PeriodicOpMode {
     @Override
     public void start() {
         /* Called once when the robot is enabled. */
+        robot.frontLeft.setThrottle(0);
     }
 
     @Override
     public void periodic() {
         if (robot.gamepad.getDpadUpButtonPressed()) {
-            throttle += 0.1;
+            throttle += STEP;
             robot.frontLeft.setThrottle(throttle);
+            System.out.printf("Throttle up to %f%n", throttle);
         } else if (robot.gamepad.getDpadDownButtonPressed()) {
-            throttle -= 0.1;
+            throttle -= STEP;
             robot.frontLeft.setThrottle(throttle);
+            System.out.printf("Throttle up to %f%n", throttle);
         }
     }
 
