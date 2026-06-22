@@ -1,8 +1,6 @@
 package com.pedropathing.ftc.localization.constants;
 
-import com.pedropathing.ftc.localization.Encoder;
-import com.pedropathing.ftc.localization.SystemCoreEncoder;
-
+import com.pedropathing.ftc.localization.SCEncoder;
 import org.wpilib.hardware.imu.OnboardIMU;
 
 /**
@@ -10,7 +8,6 @@ import org.wpilib.hardware.imu.OnboardIMU;
  * @author Baron Henderson - 20077 The Indubitables
  * @version 1.0, 12/24/2024
  */
-
 
 public class TwoWheelConstants {
 
@@ -37,11 +34,11 @@ public class TwoWheelConstants {
 
     /** The direction of the forward encoder
      * Default Value: Encoder.REVERSE */
-    public double forwardEncoderDirection = Encoder.REVERSE;
+    public double forwardEncoderDirection = SCEncoder.REVERSE;
 
     /** The direction of the strafe encoder
      * Default Value: Encoder.FORWARD */
-    public double strafeEncoderDirection = Encoder.FORWARD;
+    public double strafeEncoderDirection = SCEncoder.FORWARD;
 
     /**
      * This creates a new TwoWheelConstants with default values.
@@ -94,7 +91,7 @@ public class TwoWheelConstants {
         forwardPodY = 1;
         strafePodX = -2.5;
         IMU_Orientation = OnboardIMU.MountOrientation.FLAT;
-        forwardEncoderDirection = SystemCoreEncoder.REVERSE;
-        strafeEncoderDirection = SystemCoreEncoder.FORWARD;
+        forwardEncoderDirection = SCEncoder.REVERSE;
+        strafeEncoderDirection = SCEncoder.FORWARD;
     }
 }

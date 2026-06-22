@@ -1,16 +1,13 @@
 package first.robot.components;
 
 import com.pedropathing.control.FilteredPIDFCoefficients;
+import com.pedropathing.control.PIDFCoefficients;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.follower.FollowerConstants;
 import com.pedropathing.ftc.FollowerBuilder;
-import com.pedropathing.ftc.drivetrains.A301Motor;
-import com.pedropathing.ftc.drivetrains.HubMotor;
+import com.pedropathing.ftc.SystemCoreMap;
 import com.pedropathing.ftc.drivetrains.MecanumConstants;
-import com.pedropathing.ftc.drivetrains.Motor;
-import com.pedropathing.ftc.localization.A301Encoder;
-import com.pedropathing.ftc.localization.Encoder;
-import com.pedropathing.ftc.localization.HubEncoder;
+import com.pedropathing.ftc.localization.SCEncoder;
 import com.pedropathing.ftc.localization.constants.DriveEncoderConstants;
 import com.pedropathing.ftc.localization.constants.TwoWheelConstants;
 import com.pedropathing.paths.PathConstraints;
@@ -23,8 +20,6 @@ import org.wpilib.hardware.hal.util.AllocationException;
 import org.wpilib.hardware.imu.OnboardIMU;
 import org.wpilib.opmode.OpMode;
 import org.wpilib.opmode.Teleop;
-import totes.FourWheelDriveBase;
-import totes.TwoWheelOdo;
 
 public class DriveBase {
 
@@ -74,10 +69,13 @@ public class DriveBase {
         public static double lateralDeceleration = -48.0;
         public static double centripetalScale = 0.0005;
         // PIDs to be tuned:
-        public static com.pedropathing.control.PIDFCoefficients translationPID =
-            new com.pedropathing.control.PIDFCoefficients(0.08, 0.000005, 0.008, 0.02);
-        public static com.pedropathing.control.PIDFCoefficients headingPID =
-            new com.pedropathing.control.PIDFCoefficients(0.9, 0.005, 0.05, 0.02);
+        public static PIDFCoefficients translationPID = new PIDFCoefficients(
+            0.08,
+            0.000005,
+            0.008,
+            0.02
+        );
+        public static PIDFCoefficients headingPID = new PIDFCoefficients(0.9, 0.005, 0.05, 0.02);
         // "Kalman filtering": T in this constructor is the % of the previous
         // derivative that should be used to calculate the derivative.
         // (D is "Derivative" in PIDF...)
@@ -159,8 +157,8 @@ public class DriveBase {
                 public static String IMUName = "imu";
                 public static OnboardIMU.MountOrientation orientation =
                     OnboardIMU.MountOrientation.LANDSCAPE;
-                public static double ForwardPodDirection = Encoder.FORWARD;
-                public static double StrafePodDirection = Encoder.REVERSE;
+                public static double ForwardPodDirection = SCEncoder.FORWARD;
+                public static double StrafePodDirection = SCEncoder.REVERSE;
                 public static double ForwardPodTicksToInches = 2000 / ((Math.PI * 32) / 25.4);
                 public static double StrafePodTicksToInches = 2000 / ((Math.PI * 32) / 25.4);
                 public static double ForwardPodY = -2.5;
@@ -178,10 +176,10 @@ public class DriveBase {
 
             public static DriveEncoderConstants getDriveEncoderConstants() {
                 return new DriveEncoderConstants()
-                    .leftFrontEncoderDirection(Encoder.FORWARD)
-                    .leftRearEncoderDirection(Encoder.FORWARD)
-                    .rightFrontEncoderDirection(Encoder.FORWARD)
-                    .rightRearEncoderDirection(Encoder.FORWARD)
+                    .leftFrontEncoderDirection(SCEncoder.FORWARD)
+                    .leftRearEncoderDirection(SCEncoder.FORWARD)
+                    .rightFrontEncoderDirection(SCEncoder.FORWARD)
+                    .rightRearEncoderDirection(SCEncoder.FORWARD)
                     .forwardTicksToInches(MotorLocConfig.fwdTicksToInches)
                     .strafeTicksToInches(MotorLocConfig.latTicksToInches)
                     .turnTicksToInches(MotorLocConfig.turnTicksToInches)
@@ -209,46 +207,21 @@ public class DriveBase {
      * Begin PedroPathing stuff
      *********************/
 
-    protected static FourWheelDriveBase fwdb = null;
+    protected static SystemCoreMap scm = null;
     protected static Follower follower = null;
 
     // No encoders connected: Just use the 4wdb odo, too
-    protected static Follower createFollower(FourWheelDriveBase fwdb) {
+    protected static Follower createFollower(SystemCoreMap theScm) {
         if (follower == null) {
-            if (DriveBase.fwdb != null && fwdb != DriveBase.fwdb) {
+            if (DriveBase.scm != null && theScm != DriveBase.scm) {
                 throw new AllocationException(
                     "Attempt to create a second follower for the singleton drivebase with a different FWDB"
                 );
             }
-            Motor[] motors = fwdb.getMotors();
-            Encoder[] encs = new Encoder[4];
-            if (motors[0] instanceof A301Motor) {
-                for (int i = 0; i < 4; i++) {
-                    encs[i] = new A301Encoder(((A301Motor) motors[i]).getRaw());
-                }
-            } else if (motors[0] instanceof HubMotor) {
-                for (int i = 0; i < 4; i++) {
-                    encs[i] = new HubEncoder(((HubMotor) motors[i]).getRaw());
-                }
-            } else {
-                throw new AllocationException("Motors doesn't appear to be an A301 or Hub motor");
-            }
             Follower f = new FollowerBuilder(Config.getFollowerConstants())
                 .pathConstraints(Config.getPathConstraints())
-                .mecanumDrivetrain(
-                    motors[0],
-                    motors[1],
-                    motors[2],
-                    motors[3],
-                    Config.getDriveConstants()
-                )
-                .driveEncoderLocalizer(
-                    encs[0],
-                    encs[1],
-                    encs[2],
-                    encs[3],
-                    Config.Localizer.getDriveEncoderConstants()
-                )
+                .mecanumDrivetrain(scm, Config.getDriveConstants())
+                .driveEncoderLocalizer(scm, Config.Localizer.getDriveEncoderConstants())
                 .build();
             f.setMaxPowerScaling(Config.AUTO_SPEED);
             follower = f;
@@ -256,30 +229,17 @@ public class DriveBase {
         return follower;
     }
 
-    protected static Follower createFollower(FourWheelDriveBase fwdb, TwoWheelOdo two) {
+    protected static Follower createFollowerWithOdo(SystemCoreMap theScm) {
         if (follower == null) {
-            if (fwdb != null && fwdb != DriveBase.fwdb) {
+            if (DriveBase.scm != null && theScm != DriveBase.scm) {
                 throw new AllocationException(
                     "Attempt to create a second follower for the singleton drivebase with a different FWDB"
                 );
             }
-            Motor[] motors = fwdb.getMotors();
-            Encoder[] encoders = two.getEncoders();
             Follower f = new FollowerBuilder(Config.getFollowerConstants())
                 .pathConstraints(Config.getPathConstraints())
-                .mecanumDrivetrain(
-                    motors[0],
-                    motors[1],
-                    motors[2],
-                    motors[3],
-                    Config.getDriveConstants()
-                )
-                .twoWheelLocalizer(
-                    encoders[0],
-                    encoders[1],
-                    two.getIMU(),
-                    Config.Localizer.getTwoWheelConstants()
-                )
+                .mecanumDrivetrain(scm, Config.getDriveConstants())
+                .twoWheelLocalizer(scm, Config.Localizer.getTwoWheelConstants())
                 .build();
             f.setMaxPowerScaling(Config.AUTO_SPEED);
             follower = f;
@@ -287,12 +247,12 @@ public class DriveBase {
         return follower;
     }
 
-    public static Follower getFollower(FourWheelDriveBase fwdb, TwoWheelOdo two) {
-        return createFollower(fwdb, two);
+    public static Follower getFollowerWithOdo(SystemCoreMap scm) {
+        return createFollower(scm);
     }
 
-    public static Follower getFollower(FourWheelDriveBase fwdb) {
-        return createFollower(fwdb);
+    public static Follower getFollower(SystemCoreMap scm) {
+        return createFollower(scm);
     }
 
     /*********************
@@ -302,7 +262,7 @@ public class DriveBase {
     // TODO: Flesh this out from Decode's LearnBot: drive styles & whatnot...
     public static class Component extends SubsystemBase {
 
-        public Component(FourWheelDriveBase fwdb, TwoWheelOdo two) {
+        public Component(Robot r) {
             super("Drive Base");
         }
     }

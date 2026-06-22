@@ -1,9 +1,10 @@
-package com.pedropathing.ftc.drivetrains;
+package com.pedropathing.ftc;
 
+import com.pedropathing.ftc.drivetrains.SCMotor;
 import com.revrobotics.spark.A301;
 import org.jspecify.annotations.NonNull;
 
-public class A301Motor implements Motor {
+class A301Motor implements SCMotor {
 
     private final A301 motor;
 

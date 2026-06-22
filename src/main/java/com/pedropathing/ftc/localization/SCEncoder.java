@@ -1,6 +1,6 @@
 package com.pedropathing.ftc.localization;
 
-public interface Encoder {
+public interface SCEncoder {
     void setMultiplier(double mult);
     double getMultiplier();
     void update();

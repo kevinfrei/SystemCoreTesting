@@ -1,10 +1,11 @@
-package com.pedropathing.ftc.localization;
+package com.pedropathing.ftc;
 
 // KBF- TODO: Implement this from the SystmeCore API
 
+import com.pedropathing.ftc.localization.CustomIMU;
 import org.wpilib.hardware.imu.OnboardIMU;
 
-public class SystemCoreIMU implements CustomIMU {
+class SystemCoreIMU implements CustomIMU {
 
     private final OnboardIMU imu;
 

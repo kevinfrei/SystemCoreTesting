@@ -6,7 +6,7 @@ package com.pedropathing.ftc.drivetrains;
  * have a 'custom' motor implementation (like 2 A301's per wheel!) without needing to change
  * the library.
  */
-public interface Motor {
+public interface SCMotor {
     void setReversed(boolean isReversed);
     void setPower(double dutyCyle);
     void setZeroBraking(boolean shouldBrake);

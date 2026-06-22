@@ -1,14 +1,12 @@
 package com.pedropathing.ftc.localization.constants;
 
-
-import com.pedropathing.ftc.localization.SystemCoreEncoder;
+import com.pedropathing.ftc.localization.SCEncoder;
 
 /**
  * This is the ThreeWheelConstants class. It holds many constants and parameters for the Three Wheel Localizer.
  * @author Baron Henderson - 20077 The Indubitables
  * @version 1.0, 12/24/2024
  */
-
 
 public class ThreeWheelConstants {
 
@@ -38,15 +36,15 @@ public class ThreeWheelConstants {
 
     /** The direction of the Left Encoder
      * Default Value: Encoder.REVERSE */
-    public double leftEncoderDirection = SystemCoreEncoder.REVERSE;
+    public double leftEncoderDirection = SCEncoder.REVERSE;
 
     /** The direction of the Right Encoder
      * Default Value: Encoder.REVERSE */
-    public double rightEncoderDirection = SystemCoreEncoder.REVERSE;
+    public double rightEncoderDirection = SCEncoder.REVERSE;
 
     /** The direction of the Strafe Encoder
      * Default Value: Encoder.FORWARD */
-    public double strafeEncoderDirection = SystemCoreEncoder.FORWARD;
+    public double strafeEncoderDirection = SCEncoder.FORWARD;
 
     /**
      * This creates a new ThreeWheelConstants with default values.
@@ -107,8 +105,8 @@ public class ThreeWheelConstants {
         leftPodY = 1;
         rightPodY = -1;
         strafePodX = -2.5;
-        leftEncoderDirection = SystemCoreEncoder.REVERSE;
-        rightEncoderDirection = SystemCoreEncoder.REVERSE;
-        strafeEncoderDirection = SystemCoreEncoder.FORWARD;
+        leftEncoderDirection = SCEncoder.REVERSE;
+        rightEncoderDirection = SCEncoder.REVERSE;
+        strafeEncoderDirection = SCEncoder.FORWARD;
     }
 }

@@ -1,6 +1,6 @@
 package com.pedropathing.ftc.localization.constants;
 
-import com.pedropathing.ftc.localization.SystemCoreEncoder;
+import com.pedropathing.ftc.localization.SCEncoder;
 
 public class DriveEncoderConstants {
 
@@ -11,10 +11,10 @@ public class DriveEncoderConstants {
     public double robot_Width = 1;
     public double robot_Length = 1;
 
-    public double leftFrontEncoderDirection = SystemCoreEncoder.REVERSE;
-    public double rightFrontEncoderDirection = SystemCoreEncoder.FORWARD;
-    public double leftRearEncoderDirection = SystemCoreEncoder.REVERSE;
-    public double rightRearEncoderDirection = SystemCoreEncoder.FORWARD;
+    public double leftFrontEncoderDirection = SCEncoder.REVERSE;
+    public double rightFrontEncoderDirection = SCEncoder.FORWARD;
+    public double leftRearEncoderDirection = SCEncoder.REVERSE;
+    public double rightRearEncoderDirection = SCEncoder.FORWARD;
 
     public DriveEncoderConstants forwardTicksToInches(double forwardTicksToInches) {
         this.forwardTicksToInches = forwardTicksToInches;
@@ -69,9 +69,9 @@ public class DriveEncoderConstants {
         robot_Width = 1;
         robot_Length = 1;
 
-        leftFrontEncoderDirection = SystemCoreEncoder.REVERSE;
-        rightFrontEncoderDirection = SystemCoreEncoder.FORWARD;
-        leftRearEncoderDirection = SystemCoreEncoder.REVERSE;
-        rightRearEncoderDirection = SystemCoreEncoder.FORWARD;
+        leftFrontEncoderDirection = SCEncoder.REVERSE;
+        rightFrontEncoderDirection = SCEncoder.FORWARD;
+        leftRearEncoderDirection = SCEncoder.REVERSE;
+        rightRearEncoderDirection = SCEncoder.FORWARD;
     }
 }

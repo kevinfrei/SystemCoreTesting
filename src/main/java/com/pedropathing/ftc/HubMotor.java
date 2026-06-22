@@ -1,8 +1,9 @@
-package com.pedropathing.ftc.drivetrains;
+package com.pedropathing.ftc;
 
+import com.pedropathing.ftc.drivetrains.SCMotor;
 import org.wpilib.hardware.expansionhub.ExpansionHubMotor;
 
-public class HubMotor implements Motor {
+class HubMotor implements SCMotor {
 
     ExpansionHubMotor motor;
     double mult;

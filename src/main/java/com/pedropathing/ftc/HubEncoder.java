@@ -1,8 +1,10 @@
-package com.pedropathing.ftc.localization;
+package com.pedropathing.ftc;
 
+import com.pedropathing.ftc.localization.SCEncoder;
 import org.wpilib.hardware.expansionhub.ExpansionHubMotor;
 
-public class HubEncoder implements Encoder {
+class HubEncoder implements SCEncoder {
+
     private final ExpansionHubMotor motor;
     private double previousPosition;
     private double currentPosition;
@@ -13,6 +15,7 @@ public class HubEncoder implements Encoder {
         multiplier = 1;
         reset();
     }
+
     @Override
     public void setMultiplier(double setMultiplier) {
         multiplier = setMultiplier;

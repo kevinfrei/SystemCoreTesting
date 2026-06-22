@@ -1,18 +1,15 @@
 package com.pedropathing.ftc.localization.localizers;
 
+import com.pedropathing.ftc.SystemCoreMap;
 import com.pedropathing.ftc.localization.CustomIMU;
-import com.pedropathing.ftc.localization.Encoder;
-import com.pedropathing.ftc.localization.HubEncoder;
+import com.pedropathing.ftc.localization.SCEncoder;
 import com.pedropathing.ftc.localization.constants.TwoWheelConstants;
-
-import com.pedropathing.ftc.localization.SystemCoreEncoder;
-import com.pedropathing.localization.Localizer;
-import com.pedropathing.math.Matrix;
 import com.pedropathing.geometry.Pose;
+import com.pedropathing.localization.Localizer;
 import com.pedropathing.math.MathFunctions;
+import com.pedropathing.math.Matrix;
 import com.pedropathing.math.Vector;
 import com.pedropathing.util.NanoTimer;
-import org.wpilib.hardware.expansionhub.ExpansionHubMotor;
 
 /**
  * This is the TwoWheelLocalizer class. This class extends the Localizer superclass and is a
@@ -22,6 +19,7 @@ import org.wpilib.hardware.expansionhub.ExpansionHubMotor;
  */
 
 public class TwoWheelLocalizer implements Localizer {
+
     private final CustomIMU imu;
     private Pose startPose;
     private Pose displacementPose;
@@ -29,8 +27,8 @@ public class TwoWheelLocalizer implements Localizer {
     private Matrix prevRotationMatrix;
     private final NanoTimer timer;
     private long deltaTimeNano;
-    private final Encoder forwardEncoder;
-    private final Encoder strafeEncoder;
+    private final SCEncoder forwardEncoder;
+    private final SCEncoder strafeEncoder;
     private final double strafePodX;
     private final double forwardPodY;
     private double previousIMUOrientation;
@@ -39,68 +37,36 @@ public class TwoWheelLocalizer implements Localizer {
     public static double FORWARD_TICKS_TO_INCHES;
     public static double STRAFE_TICKS_TO_INCHES;
 
-    public TwoWheelLocalizer(
-            org.wpilib.hardware.rotation.Encoder fwdEnc,
-            org.wpilib.hardware.rotation.Encoder strafeEnc,
-            CustomIMU hw_imu,
-            TwoWheelConstants constants) {
-        this(fwdEnc, strafeEnc, hw_imu, constants, new Pose());
-    }
-    public TwoWheelLocalizer(
-            org.wpilib.hardware.rotation.Encoder fwdEnc,
-            org.wpilib.hardware.rotation.Encoder strafeEnc,
-            CustomIMU hw_imu,
-            TwoWheelConstants constants,
-            Pose setStartPose) {
-        this(new SystemCoreEncoder(fwdEnc), new SystemCoreEncoder(strafeEnc), hw_imu, constants, setStartPose);
-    }
-    public TwoWheelLocalizer(
-            ExpansionHubMotor fwdEnc,
-            ExpansionHubMotor strafeEnc,
-            CustomIMU hw_imu,
-            TwoWheelConstants constants) {
-        this(fwdEnc, strafeEnc, hw_imu, constants, new Pose());
-    }
-    public TwoWheelLocalizer(
-            ExpansionHubMotor fwdEnc,
-            ExpansionHubMotor strafeEnc,
-            CustomIMU hw_imu,
-            TwoWheelConstants constants,
-            Pose setStartPose) {
-        this(new HubEncoder(fwdEnc), new HubEncoder(strafeEnc), hw_imu, constants, setStartPose);
-    }
     /**
-     * This creates a new TwoWheelLocalizer from a HardwareMap, with a starting Pose at (0,0)
+     * This creates a new TwoWheelLocalizer from a SystemCoreMap, with a starting Pose at (0,0)
      * facing 0 heading.
      *
-     * @param fwdEnc the Forward encoder
-     * @param strafeEnc the Strafing encoder
-     * @param hw_imu the IMU to get the heading from
+     * @param scm          The SystemCoreMap interface for hardware identification
+     * @param constants    The ThreeWheelConstants for the localizer
      */
-    public TwoWheelLocalizer(Encoder fwdEnc, Encoder strafeEnc, CustomIMU hw_imu, TwoWheelConstants constants) {
-        this(fwdEnc, strafeEnc, hw_imu, constants, new Pose());
+    public TwoWheelLocalizer(SystemCoreMap scm, TwoWheelConstants constants) {
+        this(scm, constants, new Pose());
     }
 
     /**
-     * This creates a new TwoWheelLocalizer from a HardwareMap and a Pose, with the Pose
+     * This creates a new ThreeWheelLocalizer from a SystemCoreMap and a Pose, with the Pose
      * specifying the starting pose of the localizer.
      *
-     * @param fwdEnc the Forward encoder
-     * @param strafeEnc the Strafing encoder
-     * @param hw_imu the IMU to get the heading from
-     * @param setStartPose the Pose to start from
+     * @param scm          The SystemCoreMap interface for hardware identification
+     * @param constants    The ThreeWheelConstants for the localizer
+     * @param setStartPose The Pose to start from
      */
-    public TwoWheelLocalizer(Encoder fwdEnc, Encoder strafeEnc, CustomIMU hw_imu, TwoWheelConstants constants, Pose setStartPose) {
+    public TwoWheelLocalizer(SystemCoreMap scm, TwoWheelConstants constants, Pose setStartPose) {
         FORWARD_TICKS_TO_INCHES = constants.forwardTicksToInches;
         STRAFE_TICKS_TO_INCHES = constants.strafeTicksToInches;
-        imu = hw_imu;
+        imu = scm.getIMU();
         strafePodX = constants.strafePodX;
         forwardPodY = constants.forwardPodY;
 
         imu.initialize();
 
-        forwardEncoder = fwdEnc;
-        strafeEncoder = strafeEnc;
+        forwardEncoder = scm.getEncoder(SystemCoreMap.HardwareName.TWO_WHEEL_FWD_ENCODER);
+        strafeEncoder = scm.getEncoder(SystemCoreMap.HardwareName.TWO_WHEEL_STRAFE_ENCODER);
 
         forwardEncoder.setMultiplier(constants.forwardEncoderDirection);
         strafeEncoder.setMultiplier(constants.strafeEncoderDirection);
@@ -162,7 +128,7 @@ public class TwoWheelLocalizer implements Localizer {
      * @param heading the rotation of the Matrix
      */
     public void setPrevRotationMatrix(double heading) {
-        prevRotationMatrix = new Matrix(3,3);
+        prevRotationMatrix = new Matrix(3, 3);
         prevRotationMatrix.set(0, 0, Math.cos(heading));
         prevRotationMatrix.set(0, 1, -Math.sin(heading));
         prevRotationMatrix.set(1, 0, Math.sin(heading));
@@ -197,7 +163,7 @@ public class TwoWheelLocalizer implements Localizer {
         Matrix globalDeltas;
         setPrevRotationMatrix(getPose().getHeading());
 
-        Matrix transformation = new Matrix(3,3);
+        Matrix transformation = new Matrix(3, 3);
         if (Math.abs(robotDeltas.get(2, 0)) < 0.001) {
             transformation.set(0, 0, 1.0 - (Math.pow(robotDeltas.get(2, 0), 2) / 6.0));
             transformation.set(0, 1, -robotDeltas.get(2, 0) / 2.0);
@@ -206,16 +172,33 @@ public class TwoWheelLocalizer implements Localizer {
             transformation.set(2, 2, 1.0);
         } else {
             transformation.set(0, 0, Math.sin(robotDeltas.get(2, 0)) / robotDeltas.get(2, 0));
-            transformation.set(0, 1, (Math.cos(robotDeltas.get(2, 0)) - 1.0) / robotDeltas.get(2, 0));
-            transformation.set(1, 0, (1.0 - Math.cos(robotDeltas.get(2, 0))) / robotDeltas.get(2, 0));
+            transformation.set(
+                0,
+                1,
+                (Math.cos(robotDeltas.get(2, 0)) - 1.0) / robotDeltas.get(2, 0)
+            );
+            transformation.set(
+                1,
+                0,
+                (1.0 - Math.cos(robotDeltas.get(2, 0))) / robotDeltas.get(2, 0)
+            );
             transformation.set(1, 1, Math.sin(robotDeltas.get(2, 0)) / robotDeltas.get(2, 0));
             transformation.set(2, 2, 1.0);
         }
 
-        globalDeltas = Matrix.multiply(Matrix.multiply(prevRotationMatrix, transformation), robotDeltas);
+        globalDeltas = Matrix.multiply(
+            Matrix.multiply(prevRotationMatrix, transformation),
+            robotDeltas
+        );
 
-        displacementPose = displacementPose.plus(new Pose(globalDeltas.get(0, 0), globalDeltas.get(1, 0), globalDeltas.get(2, 0)));
-        currentVelocity = new Pose(globalDeltas.get(0, 0) / (deltaTimeNano / Math.pow(10.0, 9)), globalDeltas.get(1, 0) / (deltaTimeNano / Math.pow(10.0, 9)), globalDeltas.get(2, 0) / (deltaTimeNano / Math.pow(10.0, 9)));
+        displacementPose = displacementPose.plus(
+            new Pose(globalDeltas.get(0, 0), globalDeltas.get(1, 0), globalDeltas.get(2, 0))
+        );
+        currentVelocity = new Pose(
+            globalDeltas.get(0, 0) / (deltaTimeNano / Math.pow(10.0, 9)),
+            globalDeltas.get(1, 0) / (deltaTimeNano / Math.pow(10.0, 9)),
+            globalDeltas.get(2, 0) / (deltaTimeNano / Math.pow(10.0, 9))
+        );
 
         totalHeading += globalDeltas.get(2, 0);
     }
@@ -228,7 +211,9 @@ public class TwoWheelLocalizer implements Localizer {
         strafeEncoder.update();
 
         double currentIMUOrientation = MathFunctions.normalizeAngle(imu.getHeading());
-        deltaRadians = MathFunctions.getTurnDirection(previousIMUOrientation, currentIMUOrientation) * MathFunctions.getSmallestAngleDifference(currentIMUOrientation, previousIMUOrientation);
+        deltaRadians =
+            MathFunctions.getTurnDirection(previousIMUOrientation, currentIMUOrientation) *
+            MathFunctions.getSmallestAngleDifference(currentIMUOrientation, previousIMUOrientation);
         previousIMUOrientation = currentIMUOrientation;
     }
 
@@ -247,13 +232,21 @@ public class TwoWheelLocalizer implements Localizer {
      * @return returns a Matrix containing the robot relative movement.
      */
     public Matrix getRobotDeltas() {
-        Matrix returnMatrix = new Matrix(3,1);
+        Matrix returnMatrix = new Matrix(3, 1);
         // x/forward movement
-        returnMatrix.set(0,0, FORWARD_TICKS_TO_INCHES * forwardEncoder.getDeltaPosition() + forwardPodY * deltaRadians);
+        returnMatrix.set(
+            0,
+            0,
+            FORWARD_TICKS_TO_INCHES * forwardEncoder.getDeltaPosition() + forwardPodY * deltaRadians
+        );
         //y/strafe movement
-        returnMatrix.set(1,0, STRAFE_TICKS_TO_INCHES * strafeEncoder.getDeltaPosition() - strafePodX * deltaRadians);
+        returnMatrix.set(
+            1,
+            0,
+            STRAFE_TICKS_TO_INCHES * strafeEncoder.getDeltaPosition() - strafePodX * deltaRadians
+        );
         // theta/turning
-        returnMatrix.set(2,0, deltaRadians);
+        returnMatrix.set(2, 0, deltaRadians);
         return returnMatrix;
     }
 
@@ -326,6 +319,10 @@ public class TwoWheelLocalizer implements Localizer {
      */
     @Override
     public boolean isNAN() {
-        return Double.isNaN(getPose().getX()) || Double.isNaN(getPose().getY()) || Double.isNaN(getPose().getHeading());
+        return (
+            Double.isNaN(getPose().getX()) ||
+            Double.isNaN(getPose().getY()) ||
+            Double.isNaN(getPose().getHeading())
+        );
     }
 }

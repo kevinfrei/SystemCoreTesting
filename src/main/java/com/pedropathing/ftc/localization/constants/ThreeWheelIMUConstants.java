@@ -1,8 +1,6 @@
 package com.pedropathing.ftc.localization.constants;
 
-import com.pedropathing.ftc.localization.CustomIMU;
-import com.pedropathing.ftc.localization.SystemCoreEncoder;
-import com.pedropathing.ftc.localization.SystemCoreIMU;
+import com.pedropathing.ftc.localization.SCEncoder;
 import org.wpilib.hardware.imu.OnboardIMU;
 
 /**
@@ -46,15 +44,15 @@ public class ThreeWheelIMUConstants {
 
     /** The direction of the Left Encoder
      * Default Value: Encoder.REVERSE */
-    public double leftEncoderDirection = SystemCoreEncoder.REVERSE;
+    public double leftEncoderDirection = SCEncoder.REVERSE;
 
     /** The direction of the Right Encoder
      * Default Value: Encoder.FORWARD */
-    public double rightEncoderDirection = SystemCoreEncoder.REVERSE;
+    public double rightEncoderDirection = SCEncoder.REVERSE;
 
     /** The direction of the Strafe Encoder
      * Default Value: Encoder.FORWARD */
-    public double strafeEncoderDirection = SystemCoreEncoder.FORWARD;
+    public double strafeEncoderDirection = SCEncoder.FORWARD;
 
     /**
      * This creates a new ThreeWheelIMUConstants with default values.
@@ -121,8 +119,8 @@ public class ThreeWheelIMUConstants {
         rightPodY = -1;
         strafePodX = -2.5;
         IMU_Orientation = OnboardIMU.MountOrientation.FLAT;
-        leftEncoderDirection = SystemCoreEncoder.REVERSE;
-        rightEncoderDirection = SystemCoreEncoder.REVERSE;
-        strafeEncoderDirection = SystemCoreEncoder.FORWARD;
+        leftEncoderDirection = SCEncoder.REVERSE;
+        rightEncoderDirection = SCEncoder.REVERSE;
+        strafeEncoderDirection = SCEncoder.FORWARD;
     }
 }

@@ -1,4 +1,8 @@
-package com.pedropathing.ftc.localization;
+package com.pedropathing.ftc;
+
+import com.pedropathing.ftc.localization.SCEncoder;
+import com.revrobotics.spark.A301;
+import com.revrobotics.util.Signal;
 
 /**
  * This is the Encoder class. This tracks the position of a motor of class DcMotorEx. The motor
@@ -7,22 +11,21 @@ package com.pedropathing.ftc.localization;
  * @author Anyi Lin - 10158 Scott's Bots
  * @version 1.0, 4/2/2024
  */
-public class SystemCoreEncoder implements Encoder {
-    private final org.wpilib.hardware.rotation.Encoder hw_encoder;
+class A301Encoder implements SCEncoder {
+
+    private final A301 motor;
     private double previousPosition;
     private double currentPosition;
     private double multiplier;
 
-    public final static double FORWARD = 1, REVERSE = -1;
-
     /**
      * This creates a new Encoder from a DcMotorEx.
      *
-     * @param encoder the encoder this will be tracking
+     * @param setMotor the motor this will be tracking
      */
-    public SystemCoreEncoder(org.wpilib.hardware.rotation.Encoder encoder) {
-        hw_encoder = encoder;
-        multiplier = FORWARD;
+    public A301Encoder(A301 setMotor) {
+        motor = setMotor;
+        multiplier = 1;
         reset();
     }
 
@@ -41,9 +44,11 @@ public class SystemCoreEncoder implements Encoder {
      * This resets the Encoder's position and the current and previous position in the code.
      */
     public void reset() {
-        double pos = hw_encoder.getDistance();
-        previousPosition = pos;
-        currentPosition = pos;
+        Signal<Double> pos = motor.getAbsoluteEncoderPosition();
+        if (pos.isValid()) {
+            previousPosition = pos.get();
+            currentPosition = pos.get();
+        }
     }
 
     /**
@@ -51,7 +56,10 @@ public class SystemCoreEncoder implements Encoder {
      */
     public void update() {
         previousPosition = currentPosition;
-        currentPosition = hw_encoder.getDistance();
+        Signal<Double> pos = motor.getAbsoluteEncoderPosition();
+        if (pos.isValid()) {
+            currentPosition = pos.get();
+        }
     }
 
     /**
@@ -60,7 +68,7 @@ public class SystemCoreEncoder implements Encoder {
      * @return returns the multiplier
      */
     public double getMultiplier() {
-        return multiplier * (hw_encoder.getDirection() ? 1 : -1);
+        return multiplier * (motor.getInverted() ? 1 : -1);
     }
 
     /**

@@ -3,14 +3,11 @@ package com.pedropathing.ftc.drivetrains;
 import static com.pedropathing.math.MathFunctions.findNormalizingScaling;
 
 import com.pedropathing.drivetrain.Drivetrain;
+import com.pedropathing.ftc.SystemCoreMap;
 import com.pedropathing.math.Vector;
-
-import com.revrobotics.spark.A301;
-import org.wpilib.hardware.expansionhub.ExpansionHubMotor;
-import org.wpilib.system.RobotController;
-
 import java.util.Arrays;
 import java.util.List;
+import org.wpilib.system.RobotController;
 
 /**
  * This is the Mecanum class, a child class of Drivetrain. This class takes in inputs Vectors for driving, heading
@@ -22,50 +19,39 @@ import java.util.List;
  * @version 1.0, 4/30/2025
  */
 public class Mecanum extends Drivetrain {
+
     public MecanumConstants constants;
-    private final Motor leftFront;
-    private final Motor leftRear;
-    private final Motor rightFront;
-    private final Motor rightRear;
-    private final List<Motor> motors;
+    private final SCMotor leftFront;
+    private final SCMotor leftRear;
+    private final SCMotor rightFront;
+    private final SCMotor rightRear;
+    private final List<SCMotor> motors;
     private final double[] lastMotorPowers;
     private double motorCachingThreshold;
     private boolean useBrakeModeInTeleOp;
     private double staticFrictionCoefficient;
 
-
-    public Mecanum(A301 lf, A301 lr, A301 rr, A301 rf, MecanumConstants mc) {
-        this(new A301Motor(lf), new A301Motor(lr), new A301Motor(rr), new A301Motor(rf), mc);
-    }
-
-    public Mecanum(ExpansionHubMotor lf, ExpansionHubMotor lr, ExpansionHubMotor rr, ExpansionHubMotor rf, MecanumConstants mc){
-        this(new HubMotor(lf), new HubMotor(lr), new HubMotor(rr), new HubMotor(rf), mc);
-    }
     /**
      * This creates a new Mecanum, which takes in various movement vectors and outputs
      * the wheel drive powers necessary to move in the intended direction, given the true movement
      * vector for the front left mecanum wheel.
      *
-     * @param lf The Left Front motor
-     * @param lr the Left Rear motor
-     * @param rr the Right Rear motor
-     * @param rf the Right Front motor
+     * @param scm The SystemCoreMap for identifying hardware
      * @param mecanumConstants this is the MecanumConstants object that contains the names of the motors and directions etc.
      */
-    public Mecanum(Motor lf, Motor lr, Motor rr, Motor rf, MecanumConstants mecanumConstants) {
+    public Mecanum(SystemCoreMap scm, MecanumConstants mecanumConstants) {
         constants = mecanumConstants;
-        leftFront = lf;
-        leftRear = lr;
-        rightRear = rr;
-        rightFront = rf;
+        leftFront = scm.getMotor(SystemCoreMap.HardwareName.FRONT_LEFT_MOTOR);
+        leftRear = scm.getMotor(SystemCoreMap.HardwareName.REAR_LEFT_MOTOR);
+        rightRear = scm.getMotor(SystemCoreMap.HardwareName.REAR_RIGHT_MOTOR);
+        rightFront = scm.getMotor(SystemCoreMap.HardwareName.FRONT_RIGHT_ENCODER);
 
         this.maxPowerScaling = mecanumConstants.maxPower;
         this.motorCachingThreshold = mecanumConstants.motorCachingThreshold;
         this.useBrakeModeInTeleOp = mecanumConstants.useBrakeModeInTeleOp;
 
-
         motors = Arrays.asList(leftFront, leftRear, rightFront, rightRear);
-        lastMotorPowers = new double[] {0,0,0,0};
+        lastMotorPowers = new double[] { 0, 0, 0, 0 };
 
         /* TODO:KBF Maybe figure out if we need to convifugre A301's?
         for (DcMotorEx motor : motors) {
@@ -78,11 +64,18 @@ public class Mecanum extends Drivetrain {
         breakFollowing();
 
         Vector copiedFrontLeftVector = mecanumConstants.frontLeftVector.normalize();
-        vectors = new Vector[]{
-                new Vector(copiedFrontLeftVector.getMagnitude(), copiedFrontLeftVector.getTheta()),
-                new Vector(copiedFrontLeftVector.getMagnitude(), 2 * Math.PI - copiedFrontLeftVector.getTheta()),
-                new Vector(copiedFrontLeftVector.getMagnitude(), 2 * Math.PI - copiedFrontLeftVector.getTheta()),
-                new Vector(copiedFrontLeftVector.getMagnitude(), copiedFrontLeftVector.getTheta())};
+        vectors = new Vector[] {
+            new Vector(copiedFrontLeftVector.getMagnitude(), copiedFrontLeftVector.getTheta()),
+            new Vector(
+                copiedFrontLeftVector.getMagnitude(),
+                2 * Math.PI - copiedFrontLeftVector.getTheta()
+            ),
+            new Vector(
+                copiedFrontLeftVector.getMagnitude(),
+                2 * Math.PI - copiedFrontLeftVector.getTheta()
+            ),
+            new Vector(copiedFrontLeftVector.getMagnitude(), copiedFrontLeftVector.getTheta()),
+        };
     }
 
     @Override
@@ -117,14 +110,22 @@ public class Mecanum extends Drivetrain {
      * @return this returns an Array of doubles with a length of 4, which contains the wheel powers.
      */
     @Override
-    public double[] calculateDrive(Vector correctivePower, Vector headingPower, Vector pathingPower, double robotHeading) {
+    public double[] calculateDrive(
+        Vector correctivePower,
+        Vector headingPower,
+        Vector pathingPower,
+        double robotHeading
+    ) {
         // clamps down the magnitudes of the input vectors
-        if (correctivePower.getMagnitude() > maxPowerScaling)
-            correctivePower.setMagnitude(maxPowerScaling);
-        if (headingPower.getMagnitude() > maxPowerScaling)
-            headingPower.setMagnitude(maxPowerScaling);
-        if (pathingPower.getMagnitude() > maxPowerScaling)
-            pathingPower.setMagnitude(maxPowerScaling);
+        if (correctivePower.getMagnitude() > maxPowerScaling) correctivePower.setMagnitude(
+            maxPowerScaling
+        );
+        if (headingPower.getMagnitude() > maxPowerScaling) headingPower.setMagnitude(
+            maxPowerScaling
+        );
+        if (pathingPower.getMagnitude() > maxPowerScaling) pathingPower.setMagnitude(
+            maxPowerScaling
+        );
 
         // the powers for the wheel vectors
         double[] wheelPowers = new double[4];
@@ -144,21 +145,41 @@ public class Mecanum extends Drivetrain {
             Vector leftSideVector = correctivePower.minus(headingPower);
             Vector rightSideVector = correctivePower.plus(headingPower);
 
-            if (leftSideVector.getMagnitude() > maxPowerScaling || rightSideVector.getMagnitude() > maxPowerScaling) {
+            if (
+                leftSideVector.getMagnitude() > maxPowerScaling ||
+                rightSideVector.getMagnitude() > maxPowerScaling
+            ) {
                 //if the combined corrective and heading power is greater than 1, then scale down heading power
-                double headingScalingFactor = Math.min(findNormalizingScaling(correctivePower, headingPower, maxPowerScaling), findNormalizingScaling(correctivePower, headingPower.times(-1), maxPowerScaling));
-                truePathingVectors[0] = correctivePower.minus(headingPower.times(headingScalingFactor));
-                truePathingVectors[1] = correctivePower.plus(headingPower.times(headingScalingFactor));
+                double headingScalingFactor = Math.min(
+                    findNormalizingScaling(correctivePower, headingPower, maxPowerScaling),
+                    findNormalizingScaling(correctivePower, headingPower.times(-1), maxPowerScaling)
+                );
+                truePathingVectors[0] = correctivePower.minus(
+                    headingPower.times(headingScalingFactor)
+                );
+                truePathingVectors[1] = correctivePower.plus(
+                    headingPower.times(headingScalingFactor)
+                );
             } else {
                 // if we're here then we can add on some drive power but scaled down to 1
                 Vector leftSideVectorWithPathing = leftSideVector.plus(pathingPower);
                 Vector rightSideVectorWithPathing = rightSideVector.plus(pathingPower);
 
-                if (leftSideVectorWithPathing.getMagnitude() > maxPowerScaling || rightSideVectorWithPathing.getMagnitude() > maxPowerScaling) {
+                if (
+                    leftSideVectorWithPathing.getMagnitude() > maxPowerScaling ||
+                    rightSideVectorWithPathing.getMagnitude() > maxPowerScaling
+                ) {
                     // too much power now, so we scale down the pathing vector
-                    double pathingScalingFactor = Math.min(findNormalizingScaling(leftSideVector, pathingPower, maxPowerScaling), findNormalizingScaling(rightSideVector, pathingPower, maxPowerScaling));
-                    truePathingVectors[0] = leftSideVector.plus(pathingPower.times(pathingScalingFactor));
-                    truePathingVectors[1] = rightSideVector.plus(pathingPower.times(pathingScalingFactor));
+                    double pathingScalingFactor = Math.min(
+                        findNormalizingScaling(leftSideVector, pathingPower, maxPowerScaling),
+                        findNormalizingScaling(rightSideVector, pathingPower, maxPowerScaling)
+                    );
+                    truePathingVectors[0] = leftSideVector.plus(
+                        pathingPower.times(pathingScalingFactor)
+                    );
+                    truePathingVectors[1] = rightSideVector.plus(
+                        pathingPower.times(pathingScalingFactor)
+                    );
                 } else {
                     // just add the vectors together and you get the final vector
                     truePathingVectors[0] = leftSideVectorWithPathing.copy();
@@ -177,10 +198,26 @@ public class Mecanum extends Drivetrain {
             mecanumVectorsCopy[i].rotateVector(robotHeading);
         }
 
-        wheelPowers[0] = (mecanumVectorsCopy[1].getXComponent() * truePathingVectors[0].getYComponent() - truePathingVectors[0].getXComponent() * mecanumVectorsCopy[1].getYComponent()) / (mecanumVectorsCopy[1].getXComponent() * mecanumVectorsCopy[0].getYComponent() - mecanumVectorsCopy[0].getXComponent() * mecanumVectorsCopy[1].getYComponent());
-        wheelPowers[1] = (mecanumVectorsCopy[0].getXComponent() * truePathingVectors[0].getYComponent() - truePathingVectors[0].getXComponent() * mecanumVectorsCopy[0].getYComponent()) / (mecanumVectorsCopy[0].getXComponent() * mecanumVectorsCopy[1].getYComponent() - mecanumVectorsCopy[1].getXComponent() * mecanumVectorsCopy[0].getYComponent());
-        wheelPowers[2] = (mecanumVectorsCopy[3].getXComponent() * truePathingVectors[1].getYComponent() - truePathingVectors[1].getXComponent() * mecanumVectorsCopy[3].getYComponent()) / (mecanumVectorsCopy[3].getXComponent() * mecanumVectorsCopy[2].getYComponent() - mecanumVectorsCopy[2].getXComponent() * mecanumVectorsCopy[3].getYComponent());
-        wheelPowers[3] = (mecanumVectorsCopy[2].getXComponent() * truePathingVectors[1].getYComponent() - truePathingVectors[1].getXComponent() * mecanumVectorsCopy[2].getYComponent()) / (mecanumVectorsCopy[2].getXComponent() * mecanumVectorsCopy[3].getYComponent() - mecanumVectorsCopy[3].getXComponent() * mecanumVectorsCopy[2].getYComponent());
+        wheelPowers[0] =
+            (mecanumVectorsCopy[1].getXComponent() * truePathingVectors[0].getYComponent() -
+                truePathingVectors[0].getXComponent() * mecanumVectorsCopy[1].getYComponent()) /
+            (mecanumVectorsCopy[1].getXComponent() * mecanumVectorsCopy[0].getYComponent() -
+                mecanumVectorsCopy[0].getXComponent() * mecanumVectorsCopy[1].getYComponent());
+        wheelPowers[1] =
+            (mecanumVectorsCopy[0].getXComponent() * truePathingVectors[0].getYComponent() -
+                truePathingVectors[0].getXComponent() * mecanumVectorsCopy[0].getYComponent()) /
+            (mecanumVectorsCopy[0].getXComponent() * mecanumVectorsCopy[1].getYComponent() -
+                mecanumVectorsCopy[1].getXComponent() * mecanumVectorsCopy[0].getYComponent());
+        wheelPowers[2] =
+            (mecanumVectorsCopy[3].getXComponent() * truePathingVectors[1].getYComponent() -
+                truePathingVectors[1].getXComponent() * mecanumVectorsCopy[3].getYComponent()) /
+            (mecanumVectorsCopy[3].getXComponent() * mecanumVectorsCopy[2].getYComponent() -
+                mecanumVectorsCopy[2].getXComponent() * mecanumVectorsCopy[3].getYComponent());
+        wheelPowers[3] =
+            (mecanumVectorsCopy[2].getXComponent() * truePathingVectors[1].getYComponent() -
+                truePathingVectors[1].getXComponent() * mecanumVectorsCopy[2].getYComponent()) /
+            (mecanumVectorsCopy[2].getXComponent() * mecanumVectorsCopy[3].getYComponent() -
+                mecanumVectorsCopy[3].getXComponent() * mecanumVectorsCopy[2].getYComponent());
 
         if (voltageCompensation) {
             double voltageNormalized = getVoltageNormalized();
@@ -189,7 +226,10 @@ public class Mecanum extends Drivetrain {
             }
         }
 
-        double wheelPowerMax = Math.max(Math.max(Math.abs(wheelPowers[0]), Math.abs(wheelPowers[1])), Math.max(Math.abs(wheelPowers[2]), Math.abs(wheelPowers[3])));
+        double wheelPowerMax = Math.max(
+            Math.max(Math.abs(wheelPowers[0]), Math.abs(wheelPowers[1])),
+            Math.max(Math.abs(wheelPowers[2]), Math.abs(wheelPowers[3]))
+        );
 
         if (wheelPowerMax > maxPowerScaling) {
             wheelPowers[0] = (wheelPowers[0] / wheelPowerMax) * maxPowerScaling;
@@ -205,7 +245,7 @@ public class Mecanum extends Drivetrain {
      * This sets the motors to the zero power behavior of brake.
      */
     private void setMotorsToBrake() {
-        for (Motor motor : motors) {
+        for (SCMotor motor : motors) {
             motor.setZeroBraking(true);
         }
     }
@@ -214,7 +254,7 @@ public class Mecanum extends Drivetrain {
      * This sets the motors to the zero power behavior of float.
      */
     private void setMotorsToFloat() {
-        for (Motor motor : motors) {
+        for (SCMotor motor : motors) {
             motor.setZeroBraking(false);
         }
     }
@@ -231,8 +271,10 @@ public class Mecanum extends Drivetrain {
     @Override
     public void runDrive(double[] drivePowers) {
         for (int i = 0; i < motors.size(); i++) {
-            if (Math.abs(lastMotorPowers[i] - drivePowers[i]) > motorCachingThreshold ||
-                    (drivePowers[i] == 0 && lastMotorPowers[i] != 0)) {
+            if (
+                Math.abs(lastMotorPowers[i] - drivePowers[i]) > motorCachingThreshold ||
+                (drivePowers[i] == 0 && lastMotorPowers[i] != 0)
+            ) {
                 lastMotorPowers[i] = drivePowers[i];
                 motors.get(i).setPower(drivePowers[i]);
             }
@@ -255,7 +297,12 @@ public class Mecanum extends Drivetrain {
         }
     }
 
-    public void getAndRunDrivePowers(Vector correctivePower, Vector headingPower, Vector pathingPower, double robotHeading) {
+    public void getAndRunDrivePowers(
+        Vector correctivePower,
+        Vector headingPower,
+        Vector pathingPower,
+        double robotHeading
+    ) {
         runDrive(calculateDrive(correctivePower, headingPower, pathingPower, robotHeading));
     }
 
@@ -270,9 +317,14 @@ public class Mecanum extends Drivetrain {
     }
 
     @Override
-    public void setXVelocity(double xMovement) { constants.setXVelocity(xMovement); }
+    public void setXVelocity(double xMovement) {
+        constants.setXVelocity(xMovement);
+    }
+
     @Override
-    public void setYVelocity(double yMovement) { constants.setYVelocity(yMovement); }
+    public void setYVelocity(double yMovement) {
+        constants.setYVelocity(yMovement);
+    }
 
     public double getStaticFrictionCoefficient() {
         return staticFrictionCoefficient;
@@ -285,23 +337,35 @@ public class Mecanum extends Drivetrain {
 
     private double getVoltageNormalized() {
         double voltage = getVoltage();
-        return (nominalVoltage - (nominalVoltage * staticFrictionCoefficient)) / (voltage - ((nominalVoltage * nominalVoltage / voltage) * staticFrictionCoefficient));
+        return (
+            (nominalVoltage - (nominalVoltage * staticFrictionCoefficient)) /
+            (voltage - (((nominalVoltage * nominalVoltage) / voltage) * staticFrictionCoefficient))
+        );
     }
 
     @Override
     public String debugString() {
-        return "Mecanum{" +
-                " leftFront=" + leftFront +
-                ", leftRear=" + leftRear +
-                ", rightFront=" + rightFront +
-                ", rightRear=" + rightRear +
-                ", motors=" + motors +
-                ", motorCachingThreshold=" + motorCachingThreshold +
-                ", useBrakeModeInTeleOp=" + useBrakeModeInTeleOp +
-                '}';
+        return (
+            "Mecanum{" +
+            " leftFront=" +
+            leftFront +
+            ", leftRear=" +
+            leftRear +
+            ", rightFront=" +
+            rightFront +
+            ", rightRear=" +
+            rightRear +
+            ", motors=" +
+            motors +
+            ", motorCachingThreshold=" +
+            motorCachingThreshold +
+            ", useBrakeModeInTeleOp=" +
+            useBrakeModeInTeleOp +
+            '}'
+        );
     }
 
-    public List<Motor> getMotors() {
+    public List<SCMotor> getMotors() {
         return motors;
     }
 }

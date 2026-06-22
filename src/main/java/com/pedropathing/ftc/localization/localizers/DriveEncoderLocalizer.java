@@ -1,18 +1,13 @@
 package com.pedropathing.ftc.localization.localizers;
 
-import com.pedropathing.ftc.localization.A301Encoder;
-import com.pedropathing.ftc.localization.Encoder;
-import com.pedropathing.ftc.localization.HubEncoder;
+import com.pedropathing.ftc.SystemCoreMap;
+import com.pedropathing.ftc.localization.SCEncoder;
 import com.pedropathing.ftc.localization.constants.DriveEncoderConstants;
-
-import com.pedropathing.ftc.localization.SystemCoreEncoder;
+import com.pedropathing.geometry.Pose;
 import com.pedropathing.localization.Localizer;
 import com.pedropathing.math.Matrix;
-import com.pedropathing.geometry.Pose;
 import com.pedropathing.math.Vector;
 import com.pedropathing.util.NanoTimer;
-import com.revrobotics.spark.A301;
-import org.wpilib.hardware.expansionhub.ExpansionHubMotor;
 
 /**
  * This is the DriveEncoderLocalizer class. This class extends the Localizer superclass and is a
@@ -23,16 +18,17 @@ import org.wpilib.hardware.expansionhub.ExpansionHubMotor;
  */
 
 public class DriveEncoderLocalizer implements Localizer {
+
     private Pose startPose;
     private Pose displacementPose;
     private Pose currentVelocity;
     private Matrix prevRotationMatrix;
     private final NanoTimer timer;
     private long deltaTimeNano;
-    private final Encoder leftFront;
-    private final Encoder rightFront;
-    private final Encoder leftRear;
-    private final Encoder rightRear;
+    private final SCEncoder leftFront;
+    private final SCEncoder rightFront;
+    private final SCEncoder leftRear;
+    private final SCEncoder rightRear;
     private double totalHeading;
     public static double FORWARD_TICKS_TO_INCHES;
     public static double STRAFE_TICKS_TO_INCHES;
@@ -41,41 +37,29 @@ public class DriveEncoderLocalizer implements Localizer {
     public static double ROBOT_LENGTH;
 
     /**
-     * This creates a new DriveEncoderLocalizer from a HardwareMap, with a starting Pose at (0,0)
+     * This creates a new DriveEncoderLocalizer from a SystemCoreMap, with a starting Pose at (0,0)
      * facing 0 heading.
      *
-     * @param lf the left front motor
-     * @param lr the left rear motor
-     * @param rf the right front motor
-     * @param rr the right rear motor
+     * @param scm The SystemCoreMap interface for hardware identification
      * @param constants The DriveEncoderConstants for your drive base
      */
-    public DriveEncoderLocalizer(A301 lf, A301 lr, A301 rr, A301 rf, DriveEncoderConstants constants) {
-        this(lf, lr, rr, rf, constants, new Pose());
+    public DriveEncoderLocalizer(SystemCoreMap scm, DriveEncoderConstants constants) {
+        this(scm, constants, new Pose());
     }
-    public DriveEncoderLocalizer(A301 lf, A301 lr, A301 rr, A301 rf, DriveEncoderConstants constants, Pose startPose) {
-        this(new A301Encoder(lf), new A301Encoder(lr), new A301Encoder(rr), new A301Encoder(rf), constants, startPose);
-    }
-    public DriveEncoderLocalizer(ExpansionHubMotor lf, ExpansionHubMotor lr, ExpansionHubMotor rr, ExpansionHubMotor rf, DriveEncoderConstants constants) {
-        this(lf, lr, rr, rf, constants, new Pose());
-    }
-    public DriveEncoderLocalizer(ExpansionHubMotor lf, ExpansionHubMotor lr, ExpansionHubMotor rr, ExpansionHubMotor rf, DriveEncoderConstants constants, Pose startPose) {
-        this(new HubEncoder(lf), new HubEncoder(lr), new HubEncoder(rr), new HubEncoder(rf), constants, startPose);
-    }
-    public DriveEncoderLocalizer(Encoder lf, Encoder lr, Encoder rr, Encoder rf, DriveEncoderConstants constants) {
-        this(lf, lr, rr, rf, constants, new Pose());
-    }
+
     /**
-     * This creates a new DriveEncoderLocalizer from a HardwareMap and a Pose, with the Pose
+     * This creates a new DriveEncoderLocalizer from a SystemCoreMap and a Pose, with the Pose
      * specifying the starting pose of the localizer.
      *
-     * @param lf the left front motor
-     * @param lr the left rear motor
-     * @param rf the right front motor
-     * @param rr the right rear motor
+     * @param scm The SystemCoreMap interface for hardware identification
+     * @param constants The DriveEncoderConstants for your drive base
      * @param setStartPose the Pose to start from
      */
-    public DriveEncoderLocalizer(Encoder lf, Encoder lr, Encoder rr, Encoder rf, DriveEncoderConstants constants, Pose setStartPose) {
+    public DriveEncoderLocalizer(
+        SystemCoreMap scm,
+        DriveEncoderConstants constants,
+        Pose setStartPose
+    ) {
         FORWARD_TICKS_TO_INCHES = constants.forwardTicksToInches;
         STRAFE_TICKS_TO_INCHES = constants.strafeTicksToInches;
         TURN_TICKS_TO_RADIANS = constants.turnTicksToInches;
@@ -83,15 +67,15 @@ public class DriveEncoderLocalizer implements Localizer {
         ROBOT_WIDTH = constants.robot_Width;
         ROBOT_LENGTH = constants.robot_Length;
 
-        leftFront = lf;
-        leftRear = lr;
-        rightRear = rr;
-        rightFront = rf;
+        leftFront = scm.getEncoder(SystemCoreMap.HardwareName.FRONT_LEFT_ENCODER);
+        leftRear = scm.getEncoder(SystemCoreMap.HardwareName.REAR_LEFT_ENCODER);
+        rightRear = scm.getEncoder(SystemCoreMap.HardwareName.REAR_RIGHT_MOTOR);
+        rightFront = scm.getEncoder(SystemCoreMap.HardwareName.FRONT_RIGHT_ENCODER);
 
-        leftFront.setMultiplier(constants.leftFrontEncoderDirection == SystemCoreEncoder.REVERSE ? -1 : 1);
-        leftRear.setMultiplier(constants.leftRearEncoderDirection == SystemCoreEncoder.REVERSE ? -1 : 1);
-        rightFront.setMultiplier(constants.rightFrontEncoderDirection == SystemCoreEncoder.REVERSE ? -1 : 1);
-        rightRear.setMultiplier(constants.rightRearEncoderDirection == SystemCoreEncoder.REVERSE ? -1 : 1);
+        leftFront.setMultiplier(constants.leftFrontEncoderDirection);
+        leftRear.setMultiplier(constants.leftRearEncoderDirection);
+        rightFront.setMultiplier(constants.rightFrontEncoderDirection);
+        rightRear.setMultiplier(constants.rightRearEncoderDirection);
 
         setStartPose(setStartPose);
         timer = new NanoTimer();
@@ -147,7 +131,7 @@ public class DriveEncoderLocalizer implements Localizer {
      * @param heading the rotation of the Matrix
      */
     public void setPrevRotationMatrix(double heading) {
-        prevRotationMatrix = new Matrix(3,3);
+        prevRotationMatrix = new Matrix(3, 3);
         prevRotationMatrix.set(0, 0, Math.cos(heading));
         prevRotationMatrix.set(0, 1, -Math.sin(heading));
         prevRotationMatrix.set(1, 0, Math.sin(heading));
@@ -182,7 +166,7 @@ public class DriveEncoderLocalizer implements Localizer {
         Matrix globalDeltas;
         setPrevRotationMatrix(getPose().getHeading());
 
-        Matrix transformation = new Matrix(3,3);
+        Matrix transformation = new Matrix(3, 3);
         if (Math.abs(robotDeltas.get(2, 0)) < 0.001) {
             transformation.set(0, 0, 1.0 - (Math.pow(robotDeltas.get(2, 0), 2) / 6.0));
             transformation.set(0, 1, -robotDeltas.get(2, 0) / 2.0);
@@ -191,16 +175,33 @@ public class DriveEncoderLocalizer implements Localizer {
             transformation.set(2, 2, 1.0);
         } else {
             transformation.set(0, 0, Math.sin(robotDeltas.get(2, 0)) / robotDeltas.get(2, 0));
-            transformation.set(0, 1, (Math.cos(robotDeltas.get(2, 0)) - 1.0) / robotDeltas.get(2, 0));
-            transformation.set(1, 0, (1.0 - Math.cos(robotDeltas.get(2, 0))) / robotDeltas.get(2, 0));
+            transformation.set(
+                0,
+                1,
+                (Math.cos(robotDeltas.get(2, 0)) - 1.0) / robotDeltas.get(2, 0)
+            );
+            transformation.set(
+                1,
+                0,
+                (1.0 - Math.cos(robotDeltas.get(2, 0))) / robotDeltas.get(2, 0)
+            );
             transformation.set(1, 1, Math.sin(robotDeltas.get(2, 0)) / robotDeltas.get(2, 0));
             transformation.set(2, 2, 1.0);
         }
 
-        globalDeltas = Matrix.multiply(Matrix.multiply(prevRotationMatrix, transformation), robotDeltas);
+        globalDeltas = Matrix.multiply(
+            Matrix.multiply(prevRotationMatrix, transformation),
+            robotDeltas
+        );
 
-        displacementPose = displacementPose.plus(new Pose(globalDeltas.get(0, 0), globalDeltas.get(1, 0), globalDeltas.get(2, 0)));
-        currentVelocity = new Pose(globalDeltas.get(0, 0) / (deltaTimeNano / Math.pow(10.0, 9)), globalDeltas.get(1, 0) / (deltaTimeNano / Math.pow(10.0, 9)), globalDeltas.get(2, 0) / (deltaTimeNano / Math.pow(10.0, 9)));
+        displacementPose = displacementPose.plus(
+            new Pose(globalDeltas.get(0, 0), globalDeltas.get(1, 0), globalDeltas.get(2, 0))
+        );
+        currentVelocity = new Pose(
+            globalDeltas.get(0, 0) / (deltaTimeNano / Math.pow(10.0, 9)),
+            globalDeltas.get(1, 0) / (deltaTimeNano / Math.pow(10.0, 9)),
+            globalDeltas.get(2, 0) / (deltaTimeNano / Math.pow(10.0, 9))
+        );
 
         totalHeading += globalDeltas.get(2, 0);
     }
@@ -232,13 +233,37 @@ public class DriveEncoderLocalizer implements Localizer {
      * @return returns a Matrix containing the robot relative movement.
      */
     public Matrix getRobotDeltas() {
-        Matrix returnMatrix = new Matrix(3,1);
+        Matrix returnMatrix = new Matrix(3, 1);
         // x/forward movement
-        returnMatrix.set(0,0, FORWARD_TICKS_TO_INCHES * (leftFront.getDeltaPosition() + rightFront.getDeltaPosition() + leftRear.getDeltaPosition() + rightRear.getDeltaPosition()));
+        returnMatrix.set(
+            0,
+            0,
+            FORWARD_TICKS_TO_INCHES *
+                (leftFront.getDeltaPosition() +
+                    rightFront.getDeltaPosition() +
+                    leftRear.getDeltaPosition() +
+                    rightRear.getDeltaPosition())
+        );
         //y/strafe movement
-        returnMatrix.set(1,0, STRAFE_TICKS_TO_INCHES * (-leftFront.getDeltaPosition() + rightFront.getDeltaPosition() + leftRear.getDeltaPosition() - rightRear.getDeltaPosition()));
+        returnMatrix.set(
+            1,
+            0,
+            STRAFE_TICKS_TO_INCHES *
+                (-leftFront.getDeltaPosition() +
+                    rightFront.getDeltaPosition() +
+                    leftRear.getDeltaPosition() -
+                    rightRear.getDeltaPosition())
+        );
         // theta/turning
-        returnMatrix.set(2,0, TURN_TICKS_TO_RADIANS * ((-leftFront.getDeltaPosition() + rightFront.getDeltaPosition() - leftRear.getDeltaPosition() + rightRear.getDeltaPosition()) / (ROBOT_WIDTH + ROBOT_LENGTH)));
+        returnMatrix.set(
+            2,
+            0,
+            TURN_TICKS_TO_RADIANS *
+                ((-leftFront.getDeltaPosition() +
+                        rightFront.getDeltaPosition() -
+                        leftRear.getDeltaPosition() +
+                        rightRear.getDeltaPosition()) / (ROBOT_WIDTH + ROBOT_LENGTH))
+        );
         return returnMatrix;
     }
 
@@ -290,8 +315,7 @@ public class DriveEncoderLocalizer implements Localizer {
      * This does nothing since this localizer does not use the IMU.
      */
     @Override
-    public void resetIMU() {
-    }
+    public void resetIMU() {}
 
     @Override
     public double getIMUHeading() {
@@ -305,8 +329,10 @@ public class DriveEncoderLocalizer implements Localizer {
      */
     @Override
     public boolean isNAN() {
-        return Double.isNaN(getPose().getX()) || Double.isNaN(getPose().getY()) || Double.isNaN(getPose().getHeading());
+        return (
+            Double.isNaN(getPose().getX()) ||
+            Double.isNaN(getPose().getY()) ||
+            Double.isNaN(getPose().getHeading())
+        );
     }
-
-
 }

@@ -49,33 +49,10 @@ public class FollowerBuilder {
     }
 
     public FollowerBuilder driveEncoderLocalizer(
-        A301 lf,
-        A301 lr,
-        A301 rr,
-        A301 rf,
+        SystemCoreMap scm,
         DriveEncoderConstants lConstants
     ) {
-        return setLocalizer(new DriveEncoderLocalizer(lf, lr, rr, rf, lConstants));
-    }
-
-    public FollowerBuilder driveEncoderLocalizer(
-        ExpansionHubMotor lf,
-        ExpansionHubMotor lr,
-        ExpansionHubMotor rr,
-        ExpansionHubMotor rf,
-        DriveEncoderConstants lConstants
-    ) {
-        return setLocalizer(new DriveEncoderLocalizer(lf, lr, rr, rf, lConstants));
-    }
-
-    public FollowerBuilder driveEncoderLocalizer(
-        com.pedropathing.ftc.localization.Encoder lf,
-        com.pedropathing.ftc.localization.Encoder lr,
-        com.pedropathing.ftc.localization.Encoder rr,
-        com.pedropathing.ftc.localization.Encoder rf,
-        DriveEncoderConstants lConstants
-    ) {
-        return setLocalizer(new DriveEncoderLocalizer(lf, lr, rr, rf, lConstants));
+        return setLocalizer(new DriveEncoderLocalizer(scm, lConstants));
     }
 
     /*
@@ -91,69 +68,20 @@ public class FollowerBuilder {
         return setLocalizer(new PinpointLocalizer(hardwareMap, lConstants));
     }
     */
-    public FollowerBuilder threeWheelIMULocalizer(
-        ExpansionHubMotor lEnc,
-        ExpansionHubMotor rEnc,
-        ExpansionHubMotor strafeEnc,
-        CustomIMU imu,
-        ThreeWheelIMUConstants lConstants
-    ) {
-        return setLocalizer(new ThreeWheelIMULocalizer(lEnc, rEnc, strafeEnc, imu, lConstants));
-    }
 
     public FollowerBuilder threeWheelIMULocalizer(
-        Encoder lEnc,
-        Encoder rEnc,
-        Encoder strafeEnc,
-        CustomIMU imu,
+        SystemCoreMap scm,
         ThreeWheelIMUConstants lConstants
     ) {
-        return setLocalizer(new ThreeWheelIMULocalizer(lEnc, rEnc, strafeEnc, imu, lConstants));
+        return setLocalizer(new ThreeWheelIMULocalizer(scm, lConstants));
     }
 
-    public FollowerBuilder threeWheelLocalizer(
-        ExpansionHubMotor lEnc,
-        ExpansionHubMotor rEnc,
-        ExpansionHubMotor strafeEnc,
-        ThreeWheelConstants lConstants
-    ) {
-        return setLocalizer(new ThreeWheelLocalizer(lEnc, rEnc, strafeEnc, lConstants));
+    public FollowerBuilder threeWheelLocalizer(SystemCoreMap scm, ThreeWheelConstants lConstants) {
+        return setLocalizer(new ThreeWheelLocalizer(scm, lConstants));
     }
 
-    public FollowerBuilder threeWheelLocalizer(
-        Encoder lEnc,
-        Encoder rEnc,
-        Encoder strafeEnc,
-        ThreeWheelConstants lConstants
-    ) {
-        return setLocalizer(new ThreeWheelLocalizer(lEnc, rEnc, strafeEnc, lConstants));
-    }
-
-    public FollowerBuilder twoWheelLocalizer(
-        ExpansionHubMotor fwdEnc,
-        ExpansionHubMotor strafeEnc,
-        CustomIMU imu,
-        TwoWheelConstants lConstants
-    ) {
-        return setLocalizer(new TwoWheelLocalizer(fwdEnc, strafeEnc, imu, lConstants));
-    }
-
-    public FollowerBuilder twoWheelLocalizer(
-        Encoder fwdEnc,
-        Encoder strafeEnc,
-        CustomIMU imu,
-        TwoWheelConstants lConstants
-    ) {
-        return setLocalizer(new TwoWheelLocalizer(fwdEnc, strafeEnc, imu, lConstants));
-    }
-
-    public FollowerBuilder twoWheelLocalizer(
-        com.pedropathing.ftc.localization.Encoder fwdEnc,
-        com.pedropathing.ftc.localization.Encoder strafeEnc,
-        CustomIMU imu,
-        TwoWheelConstants lConstants
-    ) {
-        return setLocalizer(new TwoWheelLocalizer(fwdEnc, strafeEnc, imu, lConstants));
+    public FollowerBuilder twoWheelLocalizer(SystemCoreMap scm, TwoWheelConstants lConstants) {
+        return setLocalizer(new TwoWheelLocalizer(scm, lConstants));
     }
 
     public FollowerBuilder setDrivetrain(Drivetrain drivetrain) {
@@ -161,34 +89,8 @@ public class FollowerBuilder {
         return this;
     }
 
-    public FollowerBuilder mecanumDrivetrain(
-        A301 lf,
-        A301 lr,
-        A301 rr,
-        A301 rf,
-        MecanumConstants mecanumConstants
-    ) {
-        return setDrivetrain(new Mecanum(lf, lr, rr, rf, mecanumConstants));
-    }
-
-    public FollowerBuilder mecanumDrivetrain(
-        ExpansionHubMotor lf,
-        ExpansionHubMotor lr,
-        ExpansionHubMotor rr,
-        ExpansionHubMotor rf,
-        MecanumConstants mecanumConstants
-    ) {
-        return setDrivetrain(new Mecanum(lf, lr, rr, rf, mecanumConstants));
-    }
-
-    public FollowerBuilder mecanumDrivetrain(
-        Motor lf,
-        Motor lr,
-        Motor rr,
-        Motor rf,
-        MecanumConstants mecanumConstants
-    ) {
-        return setDrivetrain(new Mecanum(lf, lr, rr, rf, mecanumConstants));
+    public FollowerBuilder mecanumDrivetrain(SystemCoreMap scm, MecanumConstants mecanumConstants) {
+        return setDrivetrain(new Mecanum(scm, mecanumConstants));
     }
 
     /*
