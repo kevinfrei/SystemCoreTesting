@@ -202,7 +202,12 @@ public class DriveBase {
         }
     }
 
+    // TODO: Put drive base commands in here
     public static class Commands {}
+
+    /*********************
+     * Begin PedroPathing stuff
+     *********************/
 
     protected static FourWheelDriveBase fwdb = null;
     protected static Follower follower = null;
@@ -290,6 +295,11 @@ public class DriveBase {
         return createFollower(fwdb);
     }
 
+    /*********************
+     * End PedroPathing stuff
+     *********************/
+
+    // TODO: Flesh this out from Decode's LearnBot: drive styles & whatnot...
     public static class Component extends SubsystemBase {
 
         public Component(FourWheelDriveBase fwdb, TwoWheelOdo two) {
@@ -297,13 +307,79 @@ public class DriveBase {
         }
     }
 
-    @Teleop(name = "PedroTele")
-    public static class DriveBaseValidation implements OpMode {
+    // Validation opmodes below:
+
+    @Teleop(name = "Test Motors", group = "DBComp")
+    public static class MotorValidation implements OpMode {
+
+        A301 fl, fr, rr, rl;
+        Gamepad g;
+        static double POWER = 0.3;
+        static double CUTOFF = 1.3;
+
+        public MotorValidation(Robot robot) {
+            fl = robot.frontLeft;
+            fr = robot.frontRight;
+            rr = robot.rearRight;
+            rl = robot.rearLeft;
+            g = robot.gamepad;
+        }
+
+        public void start() {
+            setPower(0, 0, 0, 0);
+        }
+
+        public void periodic() {
+            double x = g.getLeftX();
+            double y = g.getLeftY();
+            // Looking for corners, so both values need to have magnitude >> 0
+            if (Math.abs(x) + Math.abs(y) < CUTOFF) {
+                System.out.printf("ZZ X: %f, Y: %f%n", x, y);
+                setPower(0, 0, 0, 0);
+            } else if (x < 0) {
+                // Left
+                if (y < 0) {
+                    // front
+                    System.out.printf("FL X: %f, Y: %f%n", x, y);
+                    setPower(POWER, 0, 0, 0);
+                } else {
+                    // rear
+                    System.out.printf("RL X: %f, Y: %f%n", x, y);
+                    setPower(0, 0, 0, POWER);
+                }
+            } else {
+                // Right
+                if (y < 0) {
+                    // front
+                    System.out.printf("FR X: %f, Y: %f%n", x, y);
+                    setPower(0, POWER, 0, 0);
+                } else {
+                    // rear
+                    System.out.printf("RR X: %f, Y: %f%n", x, y);
+                    setPower(0, 0, POWER, 0);
+                }
+            }
+        }
+
+        private void setPower(double pfl, double pfr, double prr, double prl) {
+            fl.setThrottle(pfl);
+            fr.setThrottle(pfr);
+            rr.setThrottle(prr);
+            rl.setThrottle(prl);
+        }
+
+        public void end() {
+            setPower(0, 0, 0, 0);
+        }
+    }
+
+    @Teleop(name = "Pedro Tele", group = "DBComp")
+    public static class PedroValidation implements OpMode {
 
         Follower f;
         Gamepad g;
 
-        public DriveBaseValidation(Robot robot) {
+        public PedroValidation(Robot robot) {
             f = robot.follower;
             g = robot.gamepad;
         }
@@ -321,7 +397,7 @@ public class DriveBase {
         }
     }
 
-    @Teleop(name = "Dumb Drive")
+    @Teleop(name = "Dumb Drive", group = "DBComp")
     public static class DriveBaseDumb implements OpMode {
 
         Gamepad g;
@@ -368,7 +444,7 @@ public class DriveBase {
         }
     }
 
-    @Teleop(name = "Trig Drive")
+    @Teleop(name = "Trig Drive", group = "DBComp")
     public static class DriveBaseTrig implements OpMode {
 
         Gamepad g;
