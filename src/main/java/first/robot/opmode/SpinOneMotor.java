@@ -28,18 +28,18 @@ public class SpinOneMotor extends PeriodicOpMode {
     @Override
     public void start() {
         /* Called once when the robot is enabled. */
-        robot.frontLeft.setThrottle(0);
+        robot.frontLeft.setPower(0);
     }
 
     @Override
     public void periodic() {
         if (robot.gamepad.getDpadUpButtonPressed()) {
             throttle += STEP;
-            robot.frontLeft.setThrottle(throttle);
+            robot.frontLeft.setPower(throttle);
             System.out.printf("Throttle up to %f%n", throttle);
         } else if (robot.gamepad.getDpadDownButtonPressed()) {
             throttle -= STEP;
-            robot.frontLeft.setThrottle(throttle);
+            robot.frontLeft.setPower(throttle);
             System.out.printf("Throttle up to %f%n", throttle);
         }
     }
@@ -47,12 +47,12 @@ public class SpinOneMotor extends PeriodicOpMode {
     @Override
     public void end() {
         /* Called when the robot is disabled (after previously being enabled). */
-        robot.frontLeft.setThrottle(0);
+        robot.frontLeft.setPower(0);
     }
 
     @Override
     public void close() {
         /* Called when the opmode is de-selected / no additional methods will be called. */
-        robot.frontLeft.setThrottle(0);
+        robot.frontLeft.setPower(0);
     }
 }

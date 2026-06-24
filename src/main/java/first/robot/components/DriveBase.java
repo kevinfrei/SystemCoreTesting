@@ -7,6 +7,7 @@ import com.pedropathing.follower.FollowerConstants;
 import com.pedropathing.ftc.FollowerBuilder;
 import com.pedropathing.ftc.SystemCoreMap;
 import com.pedropathing.ftc.drivetrains.MecanumConstants;
+import com.pedropathing.ftc.drivetrains.SCMotor;
 import com.pedropathing.ftc.localization.SCEncoder;
 import com.pedropathing.ftc.localization.constants.DriveEncoderConstants;
 import com.pedropathing.ftc.localization.constants.TwoWheelConstants;
@@ -272,7 +273,7 @@ public class DriveBase {
     @Teleop(name = "Test Motors", group = "DBComp")
     public static class MotorValidation implements OpMode {
 
-        A301 fl, fr, rr, rl;
+        SCMotor fl, fr, rr, rl;
         Gamepad g;
         static double POWER = 0.3;
         static double CUTOFF = 1.3;
@@ -322,10 +323,10 @@ public class DriveBase {
         }
 
         private void setPower(double pfl, double pfr, double prr, double prl) {
-            fl.setThrottle(pfl);
-            fr.setThrottle(pfr);
-            rr.setThrottle(prr);
-            rl.setThrottle(prl);
+            fl.setPower(pfl);
+            fr.setPower(pfr);
+            rr.setPower(prr);
+            rl.setPower(prl);
         }
 
         public void end() {
@@ -361,7 +362,7 @@ public class DriveBase {
     public static class DriveBaseDumb implements OpMode {
 
         Gamepad g;
-        A301 fl, fr, rr, rl;
+        SCMotor fl, fr, rr, rl;
 
         public DriveBaseDumb(Robot robot) {
             fl = robot.frontLeft;
@@ -372,10 +373,12 @@ public class DriveBase {
         }
 
         public void start() {
+            /*
             fl.setInverted(true);
             fr.setInverted(true);
             rl.setInverted(false);
             rr.setInverted(false);
+            */
         }
 
         public void periodic() {
@@ -393,10 +396,10 @@ public class DriveBase {
         }
 
         private void setPower(double pfl, double pfr, double prr, double prl) {
-            fl.setThrottle(pfl);
-            fr.setThrottle(pfr);
-            rr.setThrottle(prr);
-            rl.setThrottle(prl);
+            fl.setPower(pfl);
+            fr.setPower(pfr);
+            rr.setPower(prr);
+            rl.setPower(prl);
         }
 
         public void end() {
@@ -408,7 +411,7 @@ public class DriveBase {
     public static class DriveBaseTrig implements OpMode {
 
         Gamepad g;
-        A301 fl, fr, rr, rl;
+        SCMotor fl, fr, rr, rl;
 
         public DriveBaseTrig(Robot robot) {
             fl = robot.frontLeft;
@@ -419,10 +422,12 @@ public class DriveBase {
         }
 
         public void start() {
+            /*
             fl.setInverted(true);
             fr.setInverted(true);
             rl.setInverted(false);
             rr.setInverted(false);
+            */
         }
 
         public void periodic() {
@@ -440,10 +445,10 @@ public class DriveBase {
         }
 
         private void setPower(double pfl, double pfr, double prr, double prl) {
-            fl.setThrottle(pfl);
-            fr.setThrottle(pfr);
-            rr.setThrottle(prr);
-            rl.setThrottle(prl);
+            fl.setPower(pfl);
+            fr.setPower(pfr);
+            rr.setPower(prr);
+            rl.setPower(prl);
         }
 
         public void end() {

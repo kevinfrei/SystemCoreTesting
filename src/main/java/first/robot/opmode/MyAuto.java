@@ -1,9 +1,10 @@
 // Copyright (c) FIRST and other WPILib contributors.
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
-
+/* 
 package first.robot.opmode;
 
+import com.pedropathing.ftc.drivetrains.SCMotor;
 import com.revrobotics.spark.A301;
 import first.robot.Robot;
 import java.time.Duration;
@@ -13,16 +14,15 @@ import org.wpilib.opmode.PeriodicOpMode;
 
 @Autonomous(name = "Looping 50ms Auto", group = "Group 1")
 public class MyAuto extends PeriodicOpMode {
-
     private Instant time;
     private double curNum;
     private double delta;
     private double cutOff = 0.5;
     private int ms = 50;
     private int which;
-    private A301[] motors;
+    private SCMotor[] motors;
 
-    /** The Robot instance is passed into the opmode via the constructor. */
+    // The Robot instance is passed into the opmode via the constructor. 
     public MyAuto(Robot robot) {
         this.time = Instant.now();
         this.curNum = 0.0;
@@ -36,19 +36,19 @@ public class MyAuto extends PeriodicOpMode {
         this.which = 3;
     }
 
-    /** Called once when this opmode transitions to enabled. */
+    /* Called once when this opmode transitions to enabled. 
     @Override
     public void start() {
         stopMotors();
         time = Instant.now();
     }
 
-    /*
-     * This method runs periodically, using the same period as the Robot instance.
-     *
-     * Additional periodic methods may be configured with addPeriodic(),
-     * which can have periods that differ from the main Robot instance.
-     */
+    //
+    // This method runs periodically, using the same period as the Robot instance.
+    //
+    // Additional periodic methods may be configured with addPeriodic(),
+    // which can have periods that differ from the main Robot instance.
+
     @Override
     public void periodic() {
         Instant end = Instant.now();
@@ -81,3 +81,4 @@ public class MyAuto extends PeriodicOpMode {
         }
     }
 }
+*/
