@@ -31,7 +31,7 @@ from JetBrains. I switched it over to
 `@NonNull`. That was it. A+ for the PedroPath team. Amazing work.
 
 I was honestly expecting more to do here to split things up, clean up something,
-or, you know, anything slightly mess. Turns out, this work was _trivial_.
+or, you know, anything slightly messy. Turns out, this work was _trivial_.
 
 ## Hardware interface
 
@@ -46,7 +46,9 @@ was asking for the `hardwareMap`. This worked, but as the next problem arose,
 this became pretty unworkable. So, instead, I created an abstract class
 [`com.pedropathing.ftc.SystemCoreMap`](ftc/SystemCoreMap.java) class that users
 need to extend and [implement a single method](../../first/robot/Robot.java#L26)
-that provides hardware objects as required.
+that provides hardware objects as required. (For folks who care, this is a
+particularly simplistic mechanism to accomplish
+[Dependency Injection](https://en.wikipedia.org/wiki/Dependency_injection))
 
 ## Supporting both Hybrid _and_ MotionCore devices
 
@@ -60,10 +62,11 @@ are simple
 [brushed DC motors](https://en.wikipedia.org/wiki/Brushed_DC_electric_motor) we
 all know and love (or hate as they slowly wear out), which may or may not have
 encoders attached. Encoders, on the other, may be attached to a motor on an
-expansion hub, but they're strictly separate devices on SystemCore. And there's
-a new IMU which currently doesn't support all 6 configurations you might have
-(apparently FRC people don't have reasons to mount their control hardware upside
-down?)
+expansion hub, but they're strictly separate devices on SystemCore, but the A301
+motors also have encoders on them, for use with wheel-based odometry. And
+there's also a new IMU which currently doesn't support all 6 configurations you
+might have (apparently FRC people don't have reasons to mount their control
+hardware upside down?)
 
 So, first things first: I made interfaces for each of the 3 things that PP uses,
 that are supposed to be strcitly what PP requires, and nothing more:
@@ -90,6 +93,7 @@ There are no drivers for:
 
 - goBilda PinPoint
 - SparkFun OTOS
+- OctoQuad
 
 I just disabled all that stuff in the code. As/if drivers come available, I'll
 go after them as they show up.
@@ -97,6 +101,16 @@ go after them as they show up.
 And I didn't care much about the Swerve stuff, so I just disabled it for now. We
 have a Swerve bot base that we haven't gotten working yet. I'll probably go port
 that stuff once we have that thing closer to functional...
+
+In Summary:
+
+### TODO:
+
+- [ ] Pinpoint Localizer (drivers...)
+- [ ] OTOS Localizer (drivers...)
+- [ ] OctoQuad Localizer (drivers...)
+- [ ] OctoQuad encoder location (drivers + adaptor class)
+- [ ] All things Swerve related
 
 ### Who am I
 

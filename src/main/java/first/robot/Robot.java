@@ -6,7 +6,6 @@ package first.robot;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.ftc.SystemCoreMap;
-import com.pedropathing.ftc.localization.CustomIMU;
 import com.revrobotics.spark.A301;
 import first.robot.components.DriveBase;
 import org.jspecify.annotations.Nullable;
@@ -25,29 +24,24 @@ public class Robot extends OpModeRobot {
 
     public static class MyHardwareMap extends SystemCoreMap {
 
-        private final A301 flm, frm, rlm, rrm;
-        private final OnboardIMU imu;
+        private final Robot r;
 
         public MyHardwareMap(Robot r) {
-            flm = r.frontLeft;
-            frm = r.frontRight;
-            rrm = r.rearRight;
-            rlm = r.rearLeft;
-            imu = r.imu;
+            this.r = r;
         }
 
         @Override
         protected @Nullable Object getHardware(HardwareName nm) {
             return switch (nm) {
-                case FRONT_LEFT_MOTOR -> flm;
-                case FRONT_RIGHT_MOTOR -> frm;
-                case REAR_LEFT_MOTOR -> rlm;
-                case REAR_RIGHT_MOTOR -> rrm;
-                case FRONT_LEFT_ENCODER -> flm;
-                case FRONT_RIGHT_ENCODER -> frm;
-                case REAR_LEFT_ENCODER -> rlm;
-                case REAR_RIGHT_ENCODER -> rrm;
-                case IMU -> imu;
+                case FRONT_LEFT_MOTOR -> r.frontLeft;
+                case FRONT_RIGHT_MOTOR -> r.frontRight;
+                case REAR_LEFT_MOTOR -> r.rearLeft;
+                case REAR_RIGHT_MOTOR -> r.rearRight;
+                case FRONT_LEFT_ENCODER -> r.frontLeft;
+                case FRONT_RIGHT_ENCODER -> r.frontRight;
+                case REAR_LEFT_ENCODER -> r.rearLeft;
+                case REAR_RIGHT_ENCODER -> r.rearRight;
+                case IMU -> r.imu;
                 default -> null;
             };
         }
@@ -57,18 +51,21 @@ public class Robot extends OpModeRobot {
     public final A301 frontRight = new A301(DriveBase.Config.frPort);
     public final A301 rearRight = new A301(DriveBase.Config.rrPort);
     public final A301 rearLeft = new A301(DriveBase.Config.rlPort);
-    /*public final Encoder fwdEncoder = new Encoder(
+    /*
+    public final Encoder fwdEncoder = new Encoder(
         DriveBase.Config.fbEncCh0,
         DriveBase.Config.fbEncCh1
     );
     public final Encoder strafEncoder = new Encoder(
         DriveBase.Config.strafeEncCh0,
         DriveBase.Config.strafeEncCh1
-    );*/
+    );
+    */
     public final OnboardIMU imu = new OnboardIMU(OnboardIMU.MountOrientation.LANDSCAPE);
 
     // 2 for 2 wheel odo, 4 for 'use the drive encoders'. Let's hope we can attach odo;
-    /*private final com.pedropathing.ftc.localization.Encoder[] encoders = {
+    /*
+    private final com.pedropathing.ftc.localization.Encoder[] encoders = {
         new SystemCoreEncoder(fwdEncoder),
         new SystemCoreEncoder(strafEncoder),
     };
