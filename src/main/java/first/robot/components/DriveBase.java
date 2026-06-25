@@ -8,6 +8,7 @@ import com.pedropathing.ftc.FollowerBuilder;
 import com.pedropathing.ftc.SystemCoreMap;
 import com.pedropathing.ftc.drivetrains.MecanumConstants;
 import com.pedropathing.ftc.drivetrains.SCMotor;
+import com.pedropathing.ftc.localization.CustomIMU;
 import com.pedropathing.ftc.localization.SCEncoder;
 import com.pedropathing.ftc.localization.constants.DriveEncoderConstants;
 import com.pedropathing.ftc.localization.constants.TwoWheelConstants;
@@ -219,6 +220,7 @@ public class DriveBase {
                     "Attempt to create a second follower for the singleton drivebase with a different FWDB"
                 );
             }
+            scm = theScm;
             Follower f = new FollowerBuilder(Config.getFollowerConstants())
                 .pathConstraints(Config.getPathConstraints())
                 .mecanumDrivetrain(scm, Config.getDriveConstants())
@@ -290,15 +292,21 @@ public class DriveBase {
             setPower(0, 0, 0, 0);
         }
 
+        boolean lastZero = false;
+
         public void periodic() {
-            double x = g.getLeftX();
-            double y = g.getLeftY();
+            double x = deadZone(g.getLeftX());
+            double y = deadZone(g.getLeftY());
             // Looking for corners, so both values need to have magnitude >> 0
             if (Math.abs(x) + Math.abs(y) < CUTOFF) {
-                System.out.printf("ZZ X: %f, Y: %f%n", x, y);
+                if (lastZero == false) {
+                    System.out.printf("ZZ X: %f, Y: %f%n", x, y);
+                }
+                lastZero = true;
                 setPower(0, 0, 0, 0);
             } else if (x < 0) {
                 // Left
+                lastZero = false;
                 if (y < 0) {
                     // front
                     System.out.printf("FL X: %f, Y: %f%n", x, y);
@@ -310,6 +318,7 @@ public class DriveBase {
                 }
             } else {
                 // Right
+                lastZero = false;
                 if (y < 0) {
                     // front
                     System.out.printf("FR X: %f, Y: %f%n", x, y);
@@ -350,9 +359,9 @@ public class DriveBase {
         }
 
         public void periodic() {
-            double fwd = -g.getLeftY();
-            double strafe = g.getLeftX();
-            double rotate = g.getRightX();
+            double fwd = deadZone(-g.getLeftY());
+            double strafe = deadZone(g.getLeftX());
+            double rotate = deadZone(g.getRightX());
             System.out.printf("F: %f, S: %f, R: %f%n", fwd, strafe, rotate);
             f.setTeleOpDrive(fwd, strafe, rotate);
         }
@@ -373,25 +382,35 @@ public class DriveBase {
         }
 
         public void start() {
-            /*
-            fl.setInverted(true);
-            fr.setInverted(true);
-            rl.setInverted(false);
-            rr.setInverted(false);
-            */
+            fl.setReversed(true);
+            fr.setReversed(false);
+            rl.setReversed(true);
+            rr.setReversed(false);
         }
 
+        boolean lastZero = false;
+
         public void periodic() {
-            double fwd = -g.getLeftY();
-            double strafe = g.getLeftX();
-            double rotate = g.getRightX();
-            System.out.printf("F: %f, S: %f, R: %f%n", fwd, strafe, rotate);
+            double fwd = deadZone(-g.getLeftY());
+            double strafe = deadZone(g.getLeftX());
+            double rotate = deadZone(g.getRightX());
+            if (
+                Math.abs(fwd) <= 0.0001 && Math.abs(strafe) <= 0.0001 && Math.abs(rotate) <= 0.0001
+            ) {
+                if (!lastZero) {
+                    System.out.printf("F: %f, S: %f, R: %f%n", fwd, strafe, rotate);
+                }
+                lastZero = true;
+            } else {
+                System.out.printf("F: %f, S: %f, R: %f%n", fwd, strafe, rotate);
+                lastZero = false;
+            }
             if (Math.abs(fwd) >= Math.abs(strafe) && Math.abs(fwd) >= Math.abs(rotate)) {
                 setPower(fwd, fwd, fwd, fwd);
             } else if (Math.abs(strafe) >= Math.abs(fwd) && Math.abs(strafe) >= Math.abs(rotate)) {
-                setPower(strafe, -strafe, -strafe, strafe);
+                setPower(strafe, -strafe, strafe, -strafe);
             } else {
-                setPower(rotate, rotate, -rotate, -rotate);
+                setPower(rotate, -rotate, -rotate, rotate);
             }
         }
 
@@ -412,6 +431,7 @@ public class DriveBase {
 
         Gamepad g;
         SCMotor fl, fr, rr, rl;
+        OnboardIMU imu;
 
         public DriveBaseTrig(Robot robot) {
             fl = robot.frontLeft;
@@ -419,29 +439,45 @@ public class DriveBase {
             rr = robot.rearRight;
             rl = robot.rearLeft;
             g = robot.gamepad;
+            imu = robot.imu;
+            imu.resetYaw();
         }
 
         public void start() {
-            /*
-            fl.setInverted(true);
-            fr.setInverted(true);
-            rl.setInverted(false);
-            rr.setInverted(false);
-            */
+            fl.setReversed(true);
+            fr.setReversed(false);
+            rl.setReversed(true);
+            rr.setReversed(false);
         }
 
         public void periodic() {
-            double f = -g.getLeftY();
-            double s = g.getLeftX();
-            double rot = g.getRightX();
-            double r = Math.hypot(s, -f);
-            double robotAngle = Math.atan2(-f, s) - Math.PI / 4;
-            double rightX = rot;
-            double v1 = r * Math.cos(robotAngle) + rightX;
-            double v2 = r * Math.sin(robotAngle) - rightX;
-            double v3 = r * Math.sin(robotAngle) + rightX;
-            double v4 = r * Math.cos(robotAngle) - rightX;
-            setPower(v1, v2, v3, v4);
+            // Shamelessly stolen from GM0:
+            double y = deadZone(-g.getLeftY());
+            double x = deadZone(g.getLeftX());
+            double rx = deadZone(g.getRightX());
+
+            if (g.getRightBumperButtonPressed() || g.getLeftBumperButtonPressed()) {
+                imu.resetYaw();
+            }
+
+            double botHeading = imu.getYawRadians();
+
+            // Rotate the movement direction counter to the bot's rotation
+            double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
+            double rotY = x * Math.sin(-botHeading) + y * Math.cos(-botHeading);
+
+            rotX = rotX * 1.1; // Counteract imperfect strafing
+
+            // Denominator is the largest motor power (absolute value) or 1
+            // This ensures all the powers maintain the same ratio,
+            // but only if at least one is out of the range [-1, 1]
+            double denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(rx), 1);
+            double frontLeftPower = (rotY + rotX + rx) / denominator;
+            double backLeftPower = (rotY - rotX + rx) / denominator;
+            double frontRightPower = (rotY - rotX - rx) / denominator;
+            double backRightPower = (rotY + rotX - rx) / denominator;
+
+            setPower(frontLeftPower, frontRightPower, backRightPower, backLeftPower);
         }
 
         private void setPower(double pfl, double pfr, double prr, double prl) {
@@ -454,5 +490,13 @@ public class DriveBase {
         public void end() {
             setPower(0, 0, 0, 0);
         }
+    }
+
+    public static double deadZone(double val) {
+        double DEAD_ZONE = 0.05;
+        if (Math.abs(val) > DEAD_ZONE) {
+            return Math.copySign((Math.abs(val) - DEAD_ZONE) / (1 - DEAD_ZONE), val);
+        }
+        return 0;
     }
 }

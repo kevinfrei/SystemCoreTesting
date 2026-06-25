@@ -75,11 +75,11 @@ public class Robot extends OpModeRobot {
         new A301(CANBusMap.CAN_D2),
         new A301(CANBusMap.CAN_D3)
     );
-    public final DualA301Motor rearRight = new DualA301Motor(
+    public final DualA301Motor rearLeft = new DualA301Motor(
         new A301(CANBusMap.CAN_D4),
         new A301(CANBusMap.CAN_D5)
     );
-    public final DualA301Motor rearLeft = new DualA301Motor(
+    public final DualA301Motor rearRight = new DualA301Motor(
         new A301(CANBusMap.CAN_D6),
         new A301(CANBusMap.CAN_D7)
     );
@@ -96,6 +96,8 @@ public class Robot extends OpModeRobot {
 
     public final OnboardIMU imu = new OnboardIMU(OnboardIMU.MountOrientation.LANDSCAPE);
 
+    public final SystemCoreMap scm;
+
     // 2 for 2 wheel odo, 4 for 'use the drive encoders'. Let's hope we can attach odo;
     /*
     private final com.pedropathing.ftc.localization.Encoder[] encoders = {
@@ -111,14 +113,15 @@ public class Robot extends OpModeRobot {
      * This function is run when the robot is first started up and should be used for any
      * initialization code.
      */
-    public Robot() {}
+    public Robot() {
+        scm = new MyHardwareMap(this);
+    }
 
     /**
      * This function is called exactly once when the DS first connects.
      */
     @Override
     public void driverStationConnected() {
-        SystemCoreMap scm = new MyHardwareMap(this);
         follower = DriveBase.getFollower(scm);
     }
 

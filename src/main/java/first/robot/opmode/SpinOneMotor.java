@@ -49,11 +49,15 @@ public class SpinOneMotor extends PeriodicOpMode {
         int select = (int) Math.round(angle);
         double mag = .6 - Math.abs(angle - select);
         select = (select + 8) & 7;
-        if (select != lastset) {
+        if (Math.abs(Math.hypot(x, y)) > 0.5) {
+            if (select != lastset) {
+                set(0);
+            }
+            lastset = select;
+            set(mag);
+        } else {
             set(0);
         }
-        lastset = select;
-        set(mag);
     }
 
     private void set(double m) {
