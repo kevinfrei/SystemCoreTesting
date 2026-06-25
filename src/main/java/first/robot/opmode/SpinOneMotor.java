@@ -4,20 +4,31 @@
 
 package first.robot.opmode;
 
+import com.revrobotics.spark.A301;
 import first.robot.Robot;
 import org.wpilib.opmode.PeriodicOpMode;
 import org.wpilib.opmode.Teleop;
 
-@Teleop(name = "Spin One Motor")
+@Teleop(name = "Spin 1 of 8 Motors")
 public class SpinOneMotor extends PeriodicOpMode {
 
-    private static double STEP = 0.015625;
     private final Robot robot;
-    private double throttle = 0.0;
+    private A301[] motors;
+    private int lastset = 0;
 
     /** The Robot instance is passed into the opmode via the constructor. */
     public SpinOneMotor(Robot robot) {
         this.robot = robot;
+        motors = new A301[] {
+            robot.frontLeft.A(),
+            robot.frontLeft.B(),
+            robot.frontRight.A(),
+            robot.frontRight.B(),
+            robot.rearRight.A(),
+            robot.rearRight.B(),
+            robot.rearLeft.A(),
+            robot.rearLeft.B(),
+        };
     }
 
     @Override
@@ -28,31 +39,38 @@ public class SpinOneMotor extends PeriodicOpMode {
     @Override
     public void start() {
         /* Called once when the robot is enabled. */
-        robot.frontLeft.setPower(0);
     }
 
     @Override
     public void periodic() {
-        if (robot.gamepad.getDpadUpButtonPressed()) {
-            throttle += STEP;
-            robot.frontLeft.setPower(throttle);
-            System.out.printf("Throttle up to %f%n", throttle);
-        } else if (robot.gamepad.getDpadDownButtonPressed()) {
-            throttle -= STEP;
-            robot.frontLeft.setPower(throttle);
-            System.out.printf("Throttle up to %f%n", throttle);
+        double y = robot.gamepad.getLeftY();
+        double x = robot.gamepad.getLeftX();
+        double angle = (8 * Math.atan2(y, x)) / (Math.PI * 2);
+        int select = (int) Math.round(angle);
+        double mag = .6 - Math.abs(angle - select);
+        select = (select + 8) & 7;
+        if (select != lastset) {
+            set(0);
         }
+        lastset = select;
+        set(mag);
+    }
+
+    private void set(double m) {
+        motors[lastset].setThrottle(m);
     }
 
     @Override
     public void end() {
         /* Called when the robot is disabled (after previously being enabled). */
-        robot.frontLeft.setPower(0);
+        set(0);
     }
 
     @Override
     public void close() {
-        /* Called when the opmode is de-selected / no additional methods will be called. */
-        robot.frontLeft.setPower(0);
+        /*
+         * Called when the opmode is de-selected / no additional methods will be called.
+         */
+        set(0);
     }
 }

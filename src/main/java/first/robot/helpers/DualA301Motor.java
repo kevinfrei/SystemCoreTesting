@@ -20,6 +20,14 @@ public class DualA301Motor implements SCMotor, SCEncoder {
         multiplier = 1.0;
     }
 
+    public A301 A() {
+        return a;
+    }
+
+    public A301 B() {
+        return b;
+    }
+
     @Override
     public void setReversed(boolean isReversed) {
         a.setInverted(isReversed);
