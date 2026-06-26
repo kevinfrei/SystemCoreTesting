@@ -15,6 +15,7 @@ import com.pedropathing.paths.PathConstraints;
 import com.revrobotics.spark.A301;
 import first.robot.GlobalContext;
 import first.robot.helpers.DualA301Motor;
+import first.robot.helpers.MathUtils;
 import org.jspecify.annotations.Nullable;
 import org.wpilib.command2.SubsystemBase;
 import org.wpilib.driverstation.Gamepad;
@@ -333,8 +334,8 @@ public class DualA301DriveBase {
         boolean lastZero = false;
 
         public void periodic() {
-            double x = deadZone(g.getLeftX());
-            double y = deadZone(g.getLeftY());
+            double x = MathUtils.DeadZone(g.getLeftX(), Config.STICK_DEAD_ZONE);
+            double y = MathUtils.DeadZone(g.getLeftY(), Config.STICK_DEAD_ZONE);
             // Looking for corners, so both values need to have magnitude >> 0
             if (Math.abs(x) + Math.abs(y) < CUTOFF) {
                 if (!lastZero) {
@@ -432,9 +433,9 @@ public class DualA301DriveBase {
         }
 
         public void periodic() {
-            double fwd = deadZone(-gp.getLeftY());
-            double strafe = deadZone(gp.getLeftX());
-            double rotate = deadZone(gp.getRightX());
+            double fwd = MathUtils.DeadZone(-gp.getLeftY(), Config.STICK_DEAD_ZONE);
+            double strafe = MathUtils.DeadZone(gp.getLeftX(), Config.STICK_DEAD_ZONE);
+            double rotate = MathUtils.DeadZone(gp.getRightX(), Config.STICK_DEAD_ZONE);
             System.out.printf("F: %f, S: %f, R: %f%n", fwd, strafe, rotate);
             f.setTeleOpDrive(fwd, strafe, rotate);
         }
@@ -468,9 +469,9 @@ public class DualA301DriveBase {
         boolean lastZero = false;
 
         public void periodic() {
-            double fwd = deadZone(-gp.getLeftY());
-            double strafe = deadZone(gp.getLeftX());
-            double rotate = deadZone(gp.getRightX());
+            double fwd = MathUtils.DeadZone(-gp.getLeftY(), Config.STICK_DEAD_ZONE);
+            double strafe = MathUtils.DeadZone(gp.getLeftX(), Config.STICK_DEAD_ZONE);
+            double rotate = MathUtils.DeadZone(gp.getRightX(), Config.STICK_DEAD_ZONE);
             if (
                 Math.abs(fwd) <= 0.0001 && Math.abs(strafe) <= 0.0001 && Math.abs(rotate) <= 0.0001
             ) {
@@ -533,9 +534,9 @@ public class DualA301DriveBase {
 
         public void periodic() {
             // Shamelessly stolen from GM0:
-            double y = deadZone(-gp.getLeftY());
-            double x = deadZone(gp.getLeftX());
-            double rx = deadZone(gp.getRightX());
+            double y = MathUtils.DeadZone(-gp.getLeftY(), Config.STICK_DEAD_ZONE);
+            double x = MathUtils.DeadZone(gp.getLeftX(), Config.STICK_DEAD_ZONE);
+            double rx = MathUtils.DeadZone(gp.getRightX(), Config.STICK_DEAD_ZONE);
 
             if (gp.getRightBumperButtonPressed() || gp.getLeftBumperButtonPressed()) {
                 imu.resetYaw();
@@ -571,13 +572,5 @@ public class DualA301DriveBase {
         public void end() {
             setPower(0, 0, 0, 0);
         }
-    }
-
-    public static double deadZone(double val) {
-        double DEAD_ZONE = 0.05;
-        if (Math.abs(val) > DEAD_ZONE) {
-            return Math.copySign((Math.abs(val) - DEAD_ZONE) / (1 - DEAD_ZONE), val);
-        }
-        return 0;
     }
 }
