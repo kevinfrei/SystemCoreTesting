@@ -65,8 +65,8 @@ public class MecanumConstants {
         return this;
     }
 
-    public MecanumConstants rightRearMotorInverted(boolean rightRearMotorDirection) {
-        this.rightRearMotorInverted = rightRearMotorDirection;
+    public MecanumConstants rightRearMotorInverted(boolean rightRearMotorInverted) {
+        this.rightRearMotorInverted = rightRearMotorInverted;
         return this;
     }
 

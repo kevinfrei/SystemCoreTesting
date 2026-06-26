@@ -8,8 +8,8 @@
         "@freik/containers": "^0.4.4",
         "@freik/typechk": "^0.9.0",
         "@freik/workspace": "^0.8.1",
-        "prettier": "^3.7.4",
-        "prettier-plugin-java": "^2.10.0",
+        "prettier": "^3.9.4",
+        "prettier-plugin-java": "^2.10.2",
         "prettier-plugin-organize-imports": "^4.3.0",
         "pretty-quick": "^4.2.2",
         "simple-git": "^3.30.0",
@@ -108,9 +108,9 @@
 
     "picomatch": ["picomatch@4.0.4", "", {}, "sha512-QP88BAKvMam/3NxH6vj2o21R6MjxZUAd6nlwAS/pnGvN9IVLocLHxGYIzFhg6fUQ+5th6P4dv4eW9jX3DSIj7A=="],
 
-    "prettier": ["prettier@3.8.4", "", { "bin": { "prettier": "bin/prettier.cjs" } }, "sha512-N2MylSdi48+5N/6S5j+maeHbUSIzzZ5uOcX5Hm4QpV8Dkb1HFjfAKTKX6yNPJQD9AhcT3ifHNB66tWTTJDi11Q=="],
+    "prettier": ["prettier@3.9.4", "", { "bin": { "prettier": "bin/prettier.cjs" } }, "sha512-yWG/o/4oJfo036EKAfK6ACAoDOfHeRHx4tuxkfBZiauURiaSmYwlpOr5LQqKtIkRD2z1PLteme2WoxEnj4tHTg=="],
 
-    "prettier-plugin-java": ["prettier-plugin-java@2.10.0", "", { "dependencies": { "web-tree-sitter": "0.26.9" }, "peerDependencies": { "prettier": "^3.0.0" } }, "sha512-lDmVgJU/TCBri3kITMcNyr712Ac5Totb1fOp9GW1KCUdv4SsPfbFP7I+mUdRFEoPzE72ymf8MOgIsd/v0yA9CA=="],
+    "prettier-plugin-java": ["prettier-plugin-java@2.10.2", "", { "dependencies": { "web-tree-sitter": "0.26.9" }, "peerDependencies": { "prettier": "^3.0.0" } }, "sha512-oOXUBqb0BKfL//ZeYFcsRtbm4h8jdicg1axbBrXh2tnUcAcKAyFCl3gUL7bN7kwDwFRraQop1RF9BZk+K6pmoQ=="],
 
     "prettier-plugin-organize-imports": ["prettier-plugin-organize-imports@4.3.0", "", { "peerDependencies": { "prettier": ">=2.0", "typescript": ">=2.9", "vue-tsc": "^2.1.0 || 3" }, "optionalPeers": ["vue-tsc"] }, "sha512-FxFz0qFhyBsGdIsb697f/EkvHzi5SZOhWAjxcx2dLt+Q532bAlhswcXGYB1yzjZ69kW8UoadFBw7TyNwlq96Iw=="],
 
