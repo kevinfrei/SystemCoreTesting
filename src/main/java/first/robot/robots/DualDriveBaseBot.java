@@ -1,5 +1,6 @@
-package first.robot;
+package first.robot.robots;
 
+import first.robot.GlobalContext;
 import first.robot.components.DualA301DriveBase;
 import org.wpilib.hardware.imu.OnboardIMU;
 

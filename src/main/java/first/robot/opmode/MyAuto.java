@@ -5,7 +5,7 @@
 package first.robot.opmode;
 
 import first.robot.GlobalContext;
-import first.robot.HybridMouseBot;
+import first.robot.robots.HybridMouseBot;
 import java.time.Duration;
 import java.time.Instant;
 import org.wpilib.opmode.Autonomous;
@@ -30,7 +30,7 @@ public class MyAuto extends PeriodicOpMode {
         this.curNum = 0.0;
         this.delta = 0.025;
         this.which = 3;
-        robot = new HybridMouseBot();
+        robot = new HybridMouseBot(globalContext);
     }
 
     // Called once when this opmode transitions to enabled.
