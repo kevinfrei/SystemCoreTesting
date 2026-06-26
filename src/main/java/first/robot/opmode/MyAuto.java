@@ -1,12 +1,11 @@
 // Copyright (c) FIRST and other WPILib contributors.
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
-/* 
+
 package first.robot.opmode;
 
-import com.pedropathing.ftc.drivetrains.SCMotor;
-import com.revrobotics.spark.A301;
-import first.robot.Robot;
+import first.robot.GlobalContext;
+import first.robot.HybridMouseBot;
 import java.time.Duration;
 import java.time.Instant;
 import org.wpilib.opmode.Autonomous;
@@ -14,32 +13,30 @@ import org.wpilib.opmode.PeriodicOpMode;
 
 @Autonomous(name = "Looping 50ms Auto", group = "Group 1")
 public class MyAuto extends PeriodicOpMode {
+
     private Instant time;
     private double curNum;
     private double delta;
     private double cutOff = 0.5;
     private int ms = 50;
     private int which;
-    private SCMotor[] motors;
+    private HybridMouseBot robot;
 
-    // The Robot instance is passed into the opmode via the constructor. 
-    public MyAuto(Robot robot) {
+    // TODO: Move the gimbal on MouseBot around
+
+    // The Robot instance is passed into the opmode via the constructor.
+    public MyAuto(GlobalContext globalContext) {
         this.time = Instant.now();
         this.curNum = 0.0;
         this.delta = 0.025;
-        this.motors = new A301[] {
-            robot.frontLeft,
-            robot.frontRight,
-            robot.rearRight,
-            robot.rearLeft,
-        };
         this.which = 3;
+        robot = new HybridMouseBot();
     }
 
-    /* Called once when this opmode transitions to enabled. 
+    // Called once when this opmode transitions to enabled.
     @Override
     public void start() {
-        stopMotors();
+        stopMotion();
         time = Instant.now();
     }
 
@@ -59,26 +56,19 @@ public class MyAuto extends PeriodicOpMode {
             }
             curNum += delta;
             time = end;
-            motors[Math.abs(3 - which)].setThrottle(curNum);
             if (Math.abs(curNum - 0.001) < 0.01) {
                 which = (which + 1) % 7;
             }
-            System.out.printf("Throttle %f #%d%n", curNum, Math.abs(3 - which));
         }
     }
 
     @Override
     public void end() {
-        stopMotors();
+        stopMotion();
     }
 
-    private void stopMotors() {
-        System.out.println("Stopping Motors");
+    private void stopMotion() {
         curNum = 0;
         which = 3;
-        for (int i = 0; i < 4; i++) {
-            motors[i].setThrottle(0);
-        }
     }
 }
-*/

@@ -1,7 +1,5 @@
 package first.robot.opmode;
 
-import first.robot.Robot;
-import first.robot.components.DriveBase;
 import org.wpilib.command2.CommandScheduler;
 import org.wpilib.opmode.OpMode;
 import org.wpilib.opmode.Teleop;

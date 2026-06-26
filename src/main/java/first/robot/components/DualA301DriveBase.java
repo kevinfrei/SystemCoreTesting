@@ -8,31 +8,47 @@ import com.pedropathing.ftc.FollowerBuilder;
 import com.pedropathing.ftc.SystemCoreMap;
 import com.pedropathing.ftc.drivetrains.MecanumConstants;
 import com.pedropathing.ftc.drivetrains.SCMotor;
-import com.pedropathing.ftc.localization.CustomIMU;
 import com.pedropathing.ftc.localization.SCEncoder;
 import com.pedropathing.ftc.localization.constants.DriveEncoderConstants;
 import com.pedropathing.ftc.localization.constants.TwoWheelConstants;
 import com.pedropathing.paths.PathConstraints;
 import com.revrobotics.spark.A301;
-import first.robot.Robot;
+import first.robot.GlobalContext;
+import first.robot.helpers.DualA301Motor;
+import org.jspecify.annotations.Nullable;
 import org.wpilib.command2.SubsystemBase;
 import org.wpilib.driverstation.Gamepad;
 import org.wpilib.hardware.hal.CANBusMap;
 import org.wpilib.hardware.hal.util.AllocationException;
 import org.wpilib.hardware.imu.OnboardIMU;
+import org.wpilib.hardware.imu.OnboardIMU.MountOrientation;
 import org.wpilib.opmode.OpMode;
 import org.wpilib.opmode.Teleop;
 
-public class DriveBase {
+public class DualA301DriveBase {
 
     public static class Config {
 
-        /* HARDWARE CONFIGURATION */
-        // Ports for the A301 motors
-        public static int flPort = CANBusMap.CAN_D0;
-        public static int frPort = CANBusMap.CAN_D1;
-        public static int rrPort = CANBusMap.CAN_D2;
-        public static int rlPort = CANBusMap.CAN_D3;
+        // ---------------------- //
+        // HARDWARE CONFIGURATION //
+        // ---------------------- //
+
+        // Motor ports
+        public static int flA = CANBusMap.CAN_D0;
+        public static int flB = CANBusMap.CAN_D1;
+        public static int frA = CANBusMap.CAN_D2;
+        public static int frB = CANBusMap.CAN_D3;
+        public static int rlA = CANBusMap.CAN_D4;
+        public static int rlB = CANBusMap.CAN_D5;
+        public static int rrA = CANBusMap.CAN_D6;
+        public static int rrB = CANBusMap.CAN_D7;
+        public static boolean flInvert = true;
+        public static boolean frInvert = true;
+        public static boolean rlInvert = true;
+        public static boolean rrInvert = true;
+
+        // IMU Orientation
+        public static MountOrientation imuMounting = MountOrientation.LANDSCAPE;
 
         // Ports for the odopod encoders
         public static int fbEncCh0 = 0;
@@ -40,7 +56,10 @@ public class DriveBase {
         public static int strafeEncCh0 = 0;
         public static int strafeEncCh1 = 1;
 
-        /* SOFTWARE CONFIGURATION */
+        // ---------------------- //
+        // SOFTWARE CONFIGURATION //
+        // ---------------------- //
+
         // Max power scaling for translational driving:
         public static double SNAIL_SPEED = 0.40;
         public static double NORMAL_SPEED = 0.8;
@@ -54,7 +73,9 @@ public class DriveBase {
 
         public static double STICK_DEAD_ZONE = 0.05;
 
-        /**** Stuff for the PedroPathing follower ****/
+        // -------------------------- //
+        // PedroPathing configuration //
+        // -------------------------- //
 
         // Measured by hoomans:
         public static double botWeightKg = 4.90;
@@ -135,10 +156,10 @@ public class DriveBase {
         public static MecanumConstants getDriveConstants() {
             return new MecanumConstants()
                 .maxPower(1)
-                .leftFrontMotorInverted(true)
-                .leftRearMotorInverted(true)
-                .rightFrontMotorInverted(false)
-                .rightRearMotorInverted(false)
+                .leftFrontMotorInverted(flInvert)
+                .leftRearMotorInverted(rlInvert)
+                .rightFrontMotorInverted(frInvert)
+                .rightRearMotorInverted(rrInvert)
                 .xVelocity(xVelocity)
                 .yVelocity(yVelocity);
         }
@@ -154,11 +175,6 @@ public class DriveBase {
 
             public static class TwoWheelConfig {
 
-                public static String ForwardPodName = "odofb";
-                public static String StrafePodName = "odostrafe";
-                public static String IMUName = "imu";
-                public static OnboardIMU.MountOrientation orientation =
-                    OnboardIMU.MountOrientation.LANDSCAPE;
                 public static double ForwardPodDirection = SCEncoder.FORWARD;
                 public static double StrafePodDirection = SCEncoder.REVERSE;
                 public static double ForwardPodTicksToInches = 2000 / ((Math.PI * 32) / 25.4);
@@ -170,8 +186,8 @@ public class DriveBase {
             public enum LocalizerSelection {
                 USE_MOTORS,
                 USE_TWO_WHEEL,
-                USE_OTOS,
-                USE_PINPOINT,
+                // USE_OTOS,
+                // USE_PINPOINT,
             }
 
             public static LocalizerSelection WhichLocalizer = LocalizerSelection.USE_TWO_WHEEL;
@@ -197,7 +213,7 @@ public class DriveBase {
                     .strafeEncoderDirection(TwoWheelConfig.StrafePodDirection)
                     .strafeTicksToInches(TwoWheelConfig.StrafePodTicksToInches)
                     .strafePodX(TwoWheelConfig.StrafePodX)
-                    .IMU_Orientation(TwoWheelConfig.orientation);
+                    .IMU_Orientation(Config.imuMounting);
             }
         }
     }
@@ -205,9 +221,9 @@ public class DriveBase {
     // TODO: Put drive base commands in here
     public static class Commands {}
 
-    /*********************
-     * Begin PedroPathing stuff
-     *********************/
+    // ------------------------ //
+    // Begin PedroPathing stuff //
+    // ------------------------ //
 
     protected static SystemCoreMap scm = null;
     protected static Follower follower = null;
@@ -215,7 +231,7 @@ public class DriveBase {
     // No encoders connected: Just use the 4wdb odo, too
     protected static Follower createFollower(SystemCoreMap theScm) {
         if (follower == null) {
-            if (DriveBase.scm != null && theScm != DriveBase.scm) {
+            if (DualA301DriveBase.scm != null && theScm != DualA301DriveBase.scm) {
                 throw new AllocationException(
                     "Attempt to create a second follower for the singleton drivebase with a different FWDB"
                 );
@@ -234,7 +250,7 @@ public class DriveBase {
 
     protected static Follower createFollowerWithOdo(SystemCoreMap theScm) {
         if (follower == null) {
-            if (DriveBase.scm != null && theScm != DriveBase.scm) {
+            if (DualA301DriveBase.scm != null && theScm != DualA301DriveBase.scm) {
                 throw new AllocationException(
                     "Attempt to create a second follower for the singleton drivebase with a different FWDB"
                 );
@@ -258,14 +274,32 @@ public class DriveBase {
         return createFollower(scm);
     }
 
-    /*********************
-     * End PedroPathing stuff
-     *********************/
+    // ---------------------- //
+    // End PedroPathing stuff //
+    // ---------------------- //
 
     // TODO: Flesh this out from Decode's LearnBot: drive styles & whatnot...
     public static class Component extends SubsystemBase {
 
-        public Component(Robot r) {
+        public final DualA301Motor frontLeft = new DualA301Motor(
+            new A301(Config.flA),
+            new A301(Config.flB)
+        );
+        public final DualA301Motor frontRight = new DualA301Motor(
+            new A301(Config.frA),
+            new A301(Config.frB)
+        );
+        public final DualA301Motor rearLeft = new DualA301Motor(
+            new A301(Config.rlA),
+            new A301(Config.rlB)
+        );
+        public final DualA301Motor rearRight = new DualA301Motor(
+            new A301(Config.rrA),
+            new A301(Config.rrB)
+        );
+        public final OnboardIMU imu = new OnboardIMU(Config.imuMounting);
+
+        public Component(GlobalContext r) {
             super("Drive Base");
         }
     }
@@ -275,17 +309,21 @@ public class DriveBase {
     @Teleop(name = "Test Motors", group = "DBComp")
     public static class MotorValidation implements OpMode {
 
+        GlobalContext globalContext;
+
+        final DualA301DriveBase.Component drivebase;
         SCMotor fl, fr, rr, rl;
         Gamepad g;
         static double POWER = 0.3;
         static double CUTOFF = 1.3;
 
-        public MotorValidation(Robot robot) {
-            fl = robot.frontLeft;
-            fr = robot.frontRight;
-            rr = robot.rearRight;
-            rl = robot.rearLeft;
-            g = robot.gamepad;
+        public MotorValidation(GlobalContext globalContext) {
+            this.globalContext = globalContext;
+            drivebase = new Component(globalContext);
+            fl = drivebase.frontLeft;
+            fr = drivebase.frontRight;
+            rr = drivebase.rearRight;
+            rl = drivebase.rearLeft;
         }
 
         public void start() {
@@ -299,7 +337,7 @@ public class DriveBase {
             double y = deadZone(g.getLeftY());
             // Looking for corners, so both values need to have magnitude >> 0
             if (Math.abs(x) + Math.abs(y) < CUTOFF) {
-                if (lastZero == false) {
+                if (!lastZero) {
                     System.out.printf("ZZ X: %f, Y: %f%n", x, y);
                 }
                 lastZero = true;
@@ -343,15 +381,50 @@ public class DriveBase {
         }
     }
 
+    // This is for PedroPathing to get the hardware components
+    public static class DriveBaseHardwareMap implements SystemCoreMap {
+
+        public final Component driveBase;
+
+        public DriveBaseHardwareMap(Component c) {
+            driveBase = c;
+        }
+
+        @Override
+        public @Nullable Object getHardware(HardwareName nm) {
+            return switch (nm) {
+                // Motors
+                case FRONT_LEFT_MOTOR -> driveBase.frontLeft;
+                case FRONT_RIGHT_MOTOR -> driveBase.frontRight;
+                case REAR_LEFT_MOTOR -> driveBase.rearLeft;
+                case REAR_RIGHT_MOTOR -> driveBase.rearRight;
+                // Encoders
+                case FRONT_LEFT_ENCODER -> driveBase.frontLeft;
+                case FRONT_RIGHT_ENCODER -> driveBase.frontRight;
+                case REAR_LEFT_ENCODER -> driveBase.rearLeft;
+                case REAR_RIGHT_ENCODER -> driveBase.rearRight;
+                // And the IMU...
+                case IMU -> driveBase.imu;
+                default -> null;
+            };
+        }
+    }
+
     @Teleop(name = "Pedro Tele", group = "DBComp")
     public static class PedroValidation implements OpMode {
 
+        DualA301DriveBase.Component driveBase;
+        DriveBaseHardwareMap map;
         Follower f;
-        Gamepad g;
+        GlobalContext g;
+        Gamepad gp;
 
-        public PedroValidation(Robot robot) {
-            f = robot.follower;
-            g = robot.gamepad;
+        public PedroValidation(GlobalContext globalContext) {
+            g = globalContext;
+            driveBase = new Component(globalContext);
+            map = new DriveBaseHardwareMap(driveBase);
+            f = createFollower(map);
+            gp = g.g1;
         }
 
         public void start() {
@@ -359,9 +432,9 @@ public class DriveBase {
         }
 
         public void periodic() {
-            double fwd = deadZone(-g.getLeftY());
-            double strafe = deadZone(g.getLeftX());
-            double rotate = deadZone(g.getRightX());
+            double fwd = deadZone(-gp.getLeftY());
+            double strafe = deadZone(gp.getLeftX());
+            double rotate = deadZone(gp.getRightX());
             System.out.printf("F: %f, S: %f, R: %f%n", fwd, strafe, rotate);
             f.setTeleOpDrive(fwd, strafe, rotate);
         }
@@ -370,30 +443,34 @@ public class DriveBase {
     @Teleop(name = "Dumb Drive", group = "DBComp")
     public static class DriveBaseDumb implements OpMode {
 
-        Gamepad g;
+        GlobalContext g;
+        DualA301DriveBase.Component driveBase;
+        Gamepad gp;
         SCMotor fl, fr, rr, rl;
 
-        public DriveBaseDumb(Robot robot) {
-            fl = robot.frontLeft;
-            fr = robot.frontRight;
-            rr = robot.rearRight;
-            rl = robot.rearLeft;
-            g = robot.gamepad;
+        public DriveBaseDumb(GlobalContext globalContext) {
+            g = globalContext;
+            gp = globalContext.g1;
+            driveBase = new Component(globalContext);
+            fl = driveBase.frontLeft;
+            fr = driveBase.frontRight;
+            rr = driveBase.rearRight;
+            rl = driveBase.rearLeft;
         }
 
         public void start() {
-            fl.setReversed(true);
-            fr.setReversed(false);
-            rl.setReversed(true);
-            rr.setReversed(false);
+            fl.setReversed(Config.flInvert);
+            fr.setReversed(Config.frInvert);
+            rl.setReversed(Config.rlInvert);
+            rr.setReversed(Config.rrInvert);
         }
 
         boolean lastZero = false;
 
         public void periodic() {
-            double fwd = deadZone(-g.getLeftY());
-            double strafe = deadZone(g.getLeftX());
-            double rotate = deadZone(g.getRightX());
+            double fwd = deadZone(-gp.getLeftY());
+            double strafe = deadZone(gp.getLeftX());
+            double rotate = deadZone(gp.getRightX());
             if (
                 Math.abs(fwd) <= 0.0001 && Math.abs(strafe) <= 0.0001 && Math.abs(rotate) <= 0.0001
             ) {
@@ -429,34 +506,38 @@ public class DriveBase {
     @Teleop(name = "Trig Drive", group = "DBComp")
     public static class DriveBaseTrig implements OpMode {
 
-        Gamepad g;
+        GlobalContext g;
+        DualA301DriveBase.Component driveBase;
+        Gamepad gp;
         SCMotor fl, fr, rr, rl;
         OnboardIMU imu;
 
-        public DriveBaseTrig(Robot robot) {
-            fl = robot.frontLeft;
-            fr = robot.frontRight;
-            rr = robot.rearRight;
-            rl = robot.rearLeft;
-            g = robot.gamepad;
-            imu = robot.imu;
+        public DriveBaseTrig(GlobalContext globalContext) {
+            g = globalContext;
+            gp = globalContext.g1;
+            driveBase = new Component(globalContext);
+            fl = driveBase.frontLeft;
+            fr = driveBase.frontRight;
+            rr = driveBase.rearRight;
+            rl = driveBase.rearLeft;
+            imu = driveBase.imu;
             imu.resetYaw();
         }
 
         public void start() {
-            fl.setReversed(true);
-            fr.setReversed(false);
-            rl.setReversed(true);
-            rr.setReversed(false);
+            fl.setReversed(Config.flInvert);
+            fr.setReversed(Config.frInvert);
+            rl.setReversed(Config.rlInvert);
+            rr.setReversed(Config.rrInvert);
         }
 
         public void periodic() {
             // Shamelessly stolen from GM0:
-            double y = deadZone(-g.getLeftY());
-            double x = deadZone(g.getLeftX());
-            double rx = deadZone(g.getRightX());
+            double y = deadZone(-gp.getLeftY());
+            double x = deadZone(gp.getLeftX());
+            double rx = deadZone(gp.getRightX());
 
-            if (g.getRightBumperButtonPressed() || g.getLeftBumperButtonPressed()) {
+            if (gp.getRightBumperButtonPressed() || gp.getLeftBumperButtonPressed()) {
                 imu.resetYaw();
             }
 

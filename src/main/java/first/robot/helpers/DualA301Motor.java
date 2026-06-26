@@ -5,6 +5,11 @@ import com.pedropathing.ftc.localization.SCEncoder;
 import com.revrobotics.spark.A301;
 import com.revrobotics.util.Signal;
 
+/**
+ * An implementation of the SCMotor and SCEncoder interface that uses
+ * *2* A301's instead of just 1, because our Mech Lead is slightly unhinged,
+ * in the best way possible :D
+ */
 public class DualA301Motor implements SCMotor, SCEncoder {
 
     private A301 a, b;
