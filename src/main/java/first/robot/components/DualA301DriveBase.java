@@ -24,7 +24,7 @@ import org.wpilib.hardware.hal.util.AllocationException;
 import org.wpilib.hardware.imu.OnboardIMU;
 import org.wpilib.hardware.imu.OnboardIMU.MountOrientation;
 import org.wpilib.opmode.OpMode;
-import org.wpilib.opmode.Teleop;
+import org.wpilib.opmode.Utility;
 
 public class DualA301DriveBase {
 
@@ -307,7 +307,11 @@ public class DualA301DriveBase {
 
     // Validation opmodes below:
 
-    @Teleop(name = "Test Motors", group = "DBComp")
+    @Utility(
+        name = "Test Motors",
+        group = "Drivebase",
+        description = "Spins drive motors using the position of the left stick"
+    )
     public static class MotorValidation implements OpMode {
 
         GlobalContext globalContext;
@@ -317,9 +321,11 @@ public class DualA301DriveBase {
         Gamepad g;
         static double POWER = 0.3;
         static double CUTOFF = 1.3;
+        static double DELTA = 0.4;
 
         public MotorValidation(GlobalContext globalContext) {
             this.globalContext = globalContext;
+            g = globalContext.g1;
             drivebase = new Component(globalContext);
             fl = drivebase.frontLeft;
             fr = drivebase.frontRight;
@@ -337,7 +343,7 @@ public class DualA301DriveBase {
             double x = MathUtils.DeadZone(g.getLeftX(), Config.STICK_DEAD_ZONE);
             double y = MathUtils.DeadZone(g.getLeftY(), Config.STICK_DEAD_ZONE);
             // Looking for corners, so both values need to have magnitude >> 0
-            if (Math.abs(x) + Math.abs(y) < CUTOFF) {
+            if (Math.abs(x) + Math.abs(y) < CUTOFF || Math.abs(x - y) > DELTA) {
                 if (!lastZero) {
                     System.out.printf("ZZ X: %f, Y: %f%n", x, y);
                 }
@@ -411,7 +417,7 @@ public class DualA301DriveBase {
         }
     }
 
-    @Teleop(name = "Pedro Tele", group = "DBComp")
+    @Utility(name = "Try Pedro Tele", group = "Drivebase")
     public static class PedroValidation implements OpMode {
 
         DualA301DriveBase.Component driveBase;
@@ -441,7 +447,7 @@ public class DualA301DriveBase {
         }
     }
 
-    @Teleop(name = "Dumb Drive", group = "DBComp")
+    @Utility(name = "Dumb Drive", group = "Drivebase")
     public static class DriveBaseDumb implements OpMode {
 
         GlobalContext g;
@@ -504,7 +510,7 @@ public class DualA301DriveBase {
         }
     }
 
-    @Teleop(name = "Trig Drive", group = "DBComp")
+    @Utility(name = "Field-centric drive", group = "Drivebase")
     public static class DriveBaseTrig implements OpMode {
 
         GlobalContext g;
