@@ -9,10 +9,11 @@ import org.wpilib.command3.*;
 import org.wpilib.driverstation.Gamepad;
 import org.wpilib.math.filter.MedianFilter;
 import org.wpilib.opmode.PeriodicOpMode;
-import org.wpilib.opmode.Teleop;
+import org.wpilib.opmode.Utility;
 
 public class Gimbal {
 
+    // Helper class for controlling the two servos of the camera gimbal
     public static class ServoInfo {
 
         public double low;
@@ -93,6 +94,9 @@ public class Gimbal {
 
         @Override
         public double getDistance() {
+            if (camera.getDistance() < 0) {
+                return -1;
+            }
             // In Decode (2025) we use the fixed target height and camera height to calculate the
             // distance pretty accurately. To do that with a gimbal, you have to get the *accurate*
             // angle, because the camera itself doesn't know the gimbal angle.
@@ -165,7 +169,7 @@ public class Gimbal {
     //  This would entail watching a target and moving the gimbal to measure how far
     //  each movement changes the position of the target.
 
-    @Teleop(name = "Testing", group = "Gimbal")
+    @Utility(name = "Testing", group = "Gimbal")
     public static class TestingOpMode extends PeriodicOpMode {
 
         private boolean anyButtonsReleased() {

@@ -2,6 +2,9 @@ package first.robot.helpers;
 
 import org.wpilib.hardware.expansionhub.ExpansionHubServo;
 
+/**
+ * A helper container to allow querying of the current position of the servo
+ */
 public class HubServo extends ExpansionHubServo {
 
     double curPos;

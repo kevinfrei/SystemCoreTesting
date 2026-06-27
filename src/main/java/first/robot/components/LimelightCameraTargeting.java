@@ -7,7 +7,8 @@ public class LimelightCameraTargeting implements TargetAcquisition {
 
     @Override
     public double getDistance() {
-        return 0;
+        // -1 means no target, so this should keep a dead implementation 'safe'
+        return -1;
     }
 
     @Override

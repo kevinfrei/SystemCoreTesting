@@ -21,16 +21,26 @@ import first.robot.helpers.MethodCmd;
 import first.robot.helpers.TargetAcquisition;
 import java.util.Locale;
 import java.util.function.DoubleSupplier;
+import org.jspecify.annotations.Nullable;
 import org.wpilib.command2.Command;
 import org.wpilib.command2.Subsystem;
 import org.wpilib.driverstation.Alliance;
+import org.wpilib.hardware.expansionhub.ExpansionHubMotor;
 import org.wpilib.hardware.imu.OnboardIMU;
 
 public class HybridDriveBase {
 
     public static class Config {
 
-        // Names of motors:
+        // Motor Locations:
+        public static int FL_I = 0;
+        public static int FL_P = 0;
+        public static int FR_I = 0;
+        public static int FR_P = 1;
+        public static int BR_I = 0;
+        public static int BR_P = 2;
+        public static int BL_I = 0;
+        public static int BL_P = 3;
 
         // Max power scaling for translational driving:
         public static double SNAIL_SPEED = 0.40;
@@ -163,9 +173,6 @@ public class HybridDriveBase {
 
             public static class TwoWheelConfig {
 
-                public static String ForwardPodName = "odofb";
-                public static String StrafePodName = "odostrafe";
-                public static String IMUName = "imu";
                 public static OnboardIMU.MountOrientation orientation =
                     OnboardIMU.MountOrientation.LANDSCAPE;
                 public static double ForwardPodDirection = SCEncoder.FORWARD;
@@ -178,9 +185,9 @@ public class HybridDriveBase {
 
             public enum LocalizerSelection {
                 USE_MOTORS,
+                USE_TWO_WHEEL,
                 USE_OTOS,
                 USE_PINPOINT,
-                USE_TWO_WHEEL,
             }
 
             public static LocalizerSelection WhichLocalizer = LocalizerSelection.USE_TWO_WHEEL;
@@ -212,19 +219,38 @@ public class HybridDriveBase {
             */
 
             public static TwoWheelConstants getTwoWheelConstants() {
-                TwoWheelConstants twc = new TwoWheelConstants()
+                return new TwoWheelConstants()
                     .forwardEncoderDirection(TwoWheelConfig.ForwardPodDirection)
                     .forwardTicksToInches(TwoWheelConfig.ForwardPodTicksToInches)
                     .forwardPodY(TwoWheelConfig.ForwardPodY)
                     .strafeEncoderDirection(TwoWheelConfig.StrafePodDirection)
                     .strafeTicksToInches(TwoWheelConfig.StrafePodTicksToInches)
-                    .strafePodX(TwoWheelConfig.StrafePodX);
-                // TODO: Add support for a custom IMU:
-                // if (UseCustomIMU) {
-                //    return getTwoWheelConstants().customIMU(...);
-                // }
-                return twc.IMU_Orientation(TwoWheelConfig.orientation);
+                    .strafePodX(TwoWheelConfig.StrafePodX)
+                    .IMU_Orientation(TwoWheelConfig.orientation);
             }
+        }
+    }
+
+    public static class HybridHardwareMap extends SystemCoreMap {
+
+        public ExpansionHubMotor fl, fr, bl, br;
+
+        public HybridHardwareMap() {
+            fl = new ExpansionHubMotor(Config.FL_I, Config.FL_P);
+            fr = new ExpansionHubMotor(Config.FR_I, Config.FR_P);
+            bl = new ExpansionHubMotor(Config.BL_I, Config.BL_P);
+            br = new ExpansionHubMotor(Config.BR_I, Config.BR_P);
+        }
+
+        @Override
+        protected @Nullable Object getHardware(HardwareName nm) {
+            return switch (nm) {
+                case FRONT_LEFT_MOTOR -> fl;
+                case FRONT_RIGHT_MOTOR -> fr;
+                case REAR_LEFT_MOTOR -> bl;
+                case REAR_RIGHT_MOTOR -> br;
+                default -> null;
+            };
         }
     }
 
@@ -393,34 +419,29 @@ public class HybridDriveBase {
         }
     }
 
-    public static Follower createFollower(SystemCoreMap hardwareMap) {
+    public static Follower createFollower(SystemCoreMap scm) {
         FollowerBuilder fb = new FollowerBuilder(Config.getFollowerConstants())
             .pathConstraints(Config.getPathConstraints())
-            .mecanumDrivetrain(hardwareMap, Config.getDriveConstants());
+            .mecanumDrivetrain(scm, Config.getDriveConstants());
         switch (Config.Localizer.WhichLocalizer) {
+            case USE_MOTORS:
+                fb = fb.driveEncoderLocalizer(scm, Config.Localizer.getDriveEncoderConstants());
+                break;
+            case USE_TWO_WHEEL:
+                fb = fb.twoWheelLocalizer(scm, Config.Localizer.getTwoWheelConstants());
+                break;
             /*
             case USE_OTOS:
                 if (Setup.Connected.OTOS) {
                     fb = fb.OTOSLocalizer(Config.Localizer.getOtosLocalizerConstants());
                 }
                 break;
-             */
-            case USE_MOTORS:
-                fb = fb.driveEncoderLocalizer(
-                    hardwareMap,
-                    Config.Localizer.getDriveEncoderConstants()
-                );
-                break;
-            /*
             case USE_PINPOINT:
                 if (Setup.Connected.PINPOINT) {
                     fb = fb.pinpointLocalizer(Config.Localizer.getPinpointConstants());
                 }
                 break;
-                 */
-            case USE_TWO_WHEEL:
-                fb = fb.twoWheelLocalizer(hardwareMap, Config.Localizer.getTwoWheelConstants());
-                break;
+            */
         }
         Follower f = fb.build();
         f.setMaxPowerScaling(Config.AUTO_SPEED);
