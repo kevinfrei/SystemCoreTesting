@@ -5,8 +5,7 @@ import first.robot.helpers.ElapsedTime;
 import first.robot.helpers.HubServo;
 import first.robot.helpers.MathUtils;
 import first.robot.helpers.TargetAcquisition;
-import org.wpilib.command2.CommandScheduler;
-import org.wpilib.command2.SubsystemBase;
+import org.wpilib.command3.*;
 import org.wpilib.driverstation.Gamepad;
 import org.wpilib.math.filter.MedianFilter;
 import org.wpilib.opmode.PeriodicOpMode;
@@ -73,7 +72,7 @@ public class Gimbal {
     }
 
     // This doesn't support  movement yet, but *does* implement the TargetAcquisition interface
-    public static class Component extends SubsystemBase implements TargetAcquisition {
+    public static class Component extends Mechanism implements TargetAcquisition {
 
         private final HubServo yaw, pitch;
         private final TargetAcquisition camera;
@@ -84,12 +83,12 @@ public class Gimbal {
         // Scan in the direction where it thinks a target might be? This one is iffy.
         // Indicate where a target is currently located, offset from the Vision subsystem/component
         public Component(TargetAcquisition vision) {
+            super("Gimbal", Scheduler.getDefault());
             yaw = new HubServo(Config.USB_ID, Config.YAW_SERVO_PORT);
             pitch = new HubServo(Config.USB_ID, Config.PITCH_SERVO_PORT);
             yaw.setReversed(Config.Yaw.flip);
             pitch.setReversed(Config.Pitch.flip);
             camera = vision;
-            CommandScheduler.getInstance().registerSubsystem(this);
         }
 
         @Override
@@ -129,7 +128,6 @@ public class Gimbal {
         // TODO: Implement either target tracking when a target is visible
         //   OR
         //  target *scanning* when a target isn't visible
-        @Override
         public void periodic() {
             double vert = camera.getVerticalPosition();
             double horiz = camera.getHorizontalPosition();

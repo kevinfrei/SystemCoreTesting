@@ -17,7 +17,7 @@ import first.robot.GlobalContext;
 import first.robot.helpers.DualA301Motor;
 import first.robot.helpers.MathUtils;
 import org.jspecify.annotations.Nullable;
-import org.wpilib.command2.SubsystemBase;
+import org.wpilib.command3.Mechanism;
 import org.wpilib.driverstation.Gamepad;
 import org.wpilib.hardware.hal.CANBusMap;
 import org.wpilib.hardware.hal.util.AllocationException;
@@ -226,22 +226,22 @@ public class DualA301DriveBase {
     // Begin PedroPathing stuff //
     // ------------------------ //
 
-    protected static SystemCoreMap scm = null;
+    protected static DriveBaseHardwareMap hwMap = null;
     protected static Follower follower = null;
 
     // No encoders connected: Just use the 4wdb odo, too
-    protected static Follower createFollower(SystemCoreMap theScm) {
+    protected static Follower createFollower(DriveBaseHardwareMap theMap) {
         if (follower == null) {
-            if (DualA301DriveBase.scm != null && theScm != DualA301DriveBase.scm) {
+            if (DualA301DriveBase.hwMap != null && theMap != DualA301DriveBase.hwMap) {
                 throw new AllocationException(
                     "Attempt to create a second follower for the singleton drivebase with a different FWDB"
                 );
             }
-            scm = theScm;
+            hwMap = theMap;
             Follower f = new FollowerBuilder(Config.getFollowerConstants())
                 .pathConstraints(Config.getPathConstraints())
-                .mecanumDrivetrain(scm, Config.getDriveConstants())
-                .driveEncoderLocalizer(scm, Config.Localizer.getDriveEncoderConstants())
+                .mecanumDrivetrain(hwMap, Config.getDriveConstants())
+                .driveEncoderLocalizer(hwMap, Config.Localizer.getDriveEncoderConstants())
                 .build();
             f.setMaxPowerScaling(Config.AUTO_SPEED);
             follower = f;
@@ -249,17 +249,17 @@ public class DualA301DriveBase {
         return follower;
     }
 
-    protected static Follower createFollowerWithOdo(SystemCoreMap theScm) {
+    protected static Follower createFollowerWithOdo(DriveBaseHardwareMap theMap) {
         if (follower == null) {
-            if (DualA301DriveBase.scm != null && theScm != DualA301DriveBase.scm) {
+            if (DualA301DriveBase.hwMap != null && theMap != DualA301DriveBase.hwMap) {
                 throw new AllocationException(
                     "Attempt to create a second follower for the singleton drivebase with a different FWDB"
                 );
             }
             Follower f = new FollowerBuilder(Config.getFollowerConstants())
                 .pathConstraints(Config.getPathConstraints())
-                .mecanumDrivetrain(scm, Config.getDriveConstants())
-                .twoWheelLocalizer(scm, Config.Localizer.getTwoWheelConstants())
+                .mecanumDrivetrain(hwMap, Config.getDriveConstants())
+                .twoWheelLocalizer(hwMap, Config.Localizer.getTwoWheelConstants())
                 .build();
             f.setMaxPowerScaling(Config.AUTO_SPEED);
             follower = f;
@@ -267,12 +267,12 @@ public class DualA301DriveBase {
         return follower;
     }
 
-    public static Follower getFollowerWithOdo(SystemCoreMap scm) {
-        return createFollower(scm);
+    public static Follower getFollowerWithOdo(DriveBaseHardwareMap m) {
+        return createFollower(m);
     }
 
-    public static Follower getFollower(SystemCoreMap scm) {
-        return createFollower(scm);
+    public static Follower getFollower(DriveBaseHardwareMap m) {
+        return createFollower(m);
     }
 
     // ---------------------- //
@@ -280,7 +280,7 @@ public class DualA301DriveBase {
     // ---------------------- //
 
     // TODO: Flesh this out from Decode's LearnBot: drive styles & whatnot...
-    public static class Component extends SubsystemBase {
+    public static class Component extends Mechanism {
 
         public final DualA301Motor frontLeft = new DualA301Motor(
             new A301(Config.flA),

@@ -1,6 +1,6 @@
 package first.robot.opmode;
 
-import org.wpilib.command2.CommandScheduler;
+import org.wpilib.command3.Scheduler;
 import org.wpilib.opmode.OpMode;
 import org.wpilib.opmode.Teleop;
 
@@ -13,23 +13,19 @@ public class CommandTrial implements OpMode {
 
     @Override
     public void start() {
-        // Schedulee commands?
-        // CommandScheduler.getInstance().schedule(/* TODO */);
-        // CommandScheduler.getInstance().registerSubsystem(Robot.drivebase);
-        CommandScheduler.getInstance().enable();
+        // Schedule commands?
+        // Scheduler.getDefault().
     }
 
     @Override
     public void periodic() {
         // Is this all we have to do in the periodic function?
-        CommandScheduler.getInstance().run();
+        Scheduler.getDefault().run();
     }
 
     @Override
     public void end() {
         // No idea what needs done here, but seems sensible:
-        CommandScheduler.getInstance().cancelAll();
-        CommandScheduler.getInstance().unregisterAllSubsystems();
-        CommandScheduler.getInstance().disable();
+        Scheduler.getDefault().cancelAll();
     }
 }
