@@ -17,13 +17,12 @@ import com.pedropathing.paths.PathChain;
 import com.pedropathing.paths.PathConstraints;
 import first.robot.helpers.ElapsedTime;
 import first.robot.helpers.MathUtils;
-import first.robot.helpers.MethodCmd;
 import first.robot.helpers.TargetAcquisition;
 import java.util.Locale;
 import java.util.function.DoubleSupplier;
 import org.jspecify.annotations.Nullable;
-import org.wpilib.command2.Command;
-import org.wpilib.command2.Subsystem;
+import org.wpilib.command3.Command;
+import org.wpilib.command3.Mechanism;
 import org.wpilib.driverstation.Alliance;
 import org.wpilib.hardware.expansionhub.ExpansionHubMotor;
 import org.wpilib.hardware.imu.OnboardIMU;
@@ -258,164 +257,140 @@ public class HybridDriveBase {
 
         protected static Component self;
 
-        public static Command DrivePower(double p1, double p2, double p3, double p4) {
-            return new DrivePowerImpl(p1, p2, p3, p4);
-        }
-
         public static Command DrivePower(double pow) {
-            return new DrivePowerImpl(pow, pow, pow, pow);
+            return DrivePower(pow, pow, pow, pow);
         }
 
+        public static Command DrivePower(double p1, double p2, double p3, double p4) {
+            double[] p = new double[] { p1, p2, p3, p4 };
+            Follower f = getFollower();
+            return self
+                .run(coroutine -> {
+                    f.drivetrain.runDrive(p);
+                })
+                .named("Drive Power");
+        }
+
+        // The sticks (probably each are CommandAxis suppliers)
+        // Note that the stick values returned are oriented like this:
+        // Up is a negative value, down is a positive value.
+        // Left is a negative value, right is a positive value.
         public static Command JoystickDrive(
             DoubleSupplier fbStick,
             DoubleSupplier strafeStick,
             DoubleSupplier rotStick
         ) {
-            return new JoystickImpl(fbStick, strafeStick, rotStick);
+            return self
+                .run(coroutine -> {
+                    self.StartTele();
+                    while (true) {
+                        // Read the stick values, and pass them to the drive base.
+                        // We invert the signs because both up and left are negative, which is opposite Pedro.
+                        // The drivebase can do all the filtering & drive mode shenanigans it wants. We're just
+                        // here to read the joysticks and send the values to the drivebase...
+                        double fwdVal = -MathUtils.DeadZone(
+                            fbStick.getAsDouble(),
+                            Config.STICK_DEAD_ZONE
+                        );
+                        double strafeVal = -MathUtils.DeadZone(
+                            strafeStick.getAsDouble(),
+                            Config.STICK_DEAD_ZONE
+                        );
+                        double rotVal = -MathUtils.DeadZone(
+                            rotStick.getAsDouble(),
+                            Config.STICK_DEAD_ZONE
+                        );
+                        self.RegisterJoystickRead(fwdVal, strafeVal, rotVal);
+                        coroutine.yield();
+                    }
+                })
+                .named("Joystick drive");
         }
 
         public static Command FollowPath(PathChain p) {
-            return new FollowPathImpl(p);
+            return FollowPathHelper(null, p, true);
         }
 
         public static Command FollowPath(Pose startPose, PathChain p) {
-            return new FollowPathImpl(startPose, p);
+            return FollowPathHelper(startPose, p, true);
         }
 
         public static Command FollowPath(PathChain p, boolean readCurPose) {
-            return new FollowPathImpl(p, readCurPose);
+            return FollowPathHelper(null, p, readCurPose);
+        }
+
+        protected static Command FollowPathHelper(
+            Pose startPose,
+            PathChain pathChain,
+            boolean currentPose
+        ) {
+            return self
+                .run(coroutine -> {
+                    Follower f = getFollower();
+                    if (currentPose) {
+                        f.setStartingPose(startPose == null ? f.getPose() : startPose);
+                    }
+                    f.followPath(pathChain);
+                    while (f.isBusy()) {
+                        f.update();
+                        coroutine.yield();
+                    }
+                })
+                .named("Path Follower");
         }
 
         public static Command TurboSpeed() {
-            return MethodCmd.once(self::SetTurboSpeed);
+            return Command.noRequirements(cor -> {
+                self.SetTurboSpeed();
+            }).named("Turbo Speed");
         }
 
         public static Command SnailSpeed() {
-            return MethodCmd.once(self::SetSnailSpeed);
+            return Command.noRequirements(cor -> {
+                self.SetSnailSpeed();
+            }).named("Snail Speed");
         }
 
         public static Command NormalSpeed() {
-            return MethodCmd.once(self::SetNormalSpeed);
+            return Command.noRequirements(cor -> {
+                self.SetNormalSpeed();
+            }).named("Normal Speed");
         }
 
         public static Command VisionDriving() {
-            return MethodCmd.once(self::SetVisionDriving);
+            return Command.noRequirements(cor -> {
+                self.SetTangentRotation();
+            }).named("Vision Driving");
         }
 
         public static Command ResumeDriving() {
-            return MethodCmd.once(self::ResumeDriving);
+            return Command.noRequirements(cor -> {
+                self.ResumeDriving();
+            }).named("Resume Driving");
         }
 
         public static Command HoldRotation() {
-            return MethodCmd.once(self::SetHoldRotation);
+            return Command.noRequirements(cor -> {
+                self.SetHoldRotation();
+            }).named("Hold Rotation");
         }
 
         public static Command TangentRotation() {
-            return MethodCmd.once(self::SetTangentRotation);
+            return Command.noRequirements(cor -> {
+                self.SetTangentRotation();
+            }).named("Tangential Rotation");
         }
 
         public static Command SetBidirectionalRotation() {
-            return MethodCmd.once(self::SetBidirectionalRotation);
+            return Command.noRequirements(cor -> {
+                self.SetBidirectionalRotation();
+            }).named("Bidirectional Rotation");
         }
 
         public static Command SetVisionRotation() {
-            return MethodCmd.once(self::SetVisionRotation);
-        }
-
-        protected static class DrivePowerImpl extends Command {
-
-            double[] p;
-
-            public DrivePowerImpl(double p1, double p2, double p3, double p4) {
-                p = new double[4];
-                p[0] = p1;
-                p[1] = p2;
-                p[2] = p3;
-                p[3] = p4;
-            }
-
-            @Override
-            public void execute() {
-                getFollower().drivetrain.runDrive(p);
-            }
-        }
-
-        protected static class JoystickImpl extends Command {
-
-            // The sticks (probably each are CommandAxis suppliers)
-            // Note that the stick values returned are oriented like this:
-            // Up is a negative value, down is a positive value.
-            // Left is a negative value, right is a positive value.
-            DoubleSupplier x, y, r;
-
-            public JoystickImpl(
-                DoubleSupplier fbStick,
-                DoubleSupplier strafeStick,
-                DoubleSupplier rotStick
-            ) {
-                x = strafeStick;
-                y = fbStick;
-                r = rotStick;
-                addRequirements(self);
-            }
-
-            @Override
-            public void initialize() {
-                self.StartTele();
-            }
-
-            @Override
-            public void execute() {
-                // Read the stick values, and pass them to the drive base.
-                // We invert the signs because both up and left are negative, which is opposite Pedro.
-                // The drivebase can do all the filtering & drive mode shenanigans it wants. We're just
-                // here to read the joysticks and send the values to the drivebase...
-                double fwdVal = -MathUtils.DeadZone(y.getAsDouble(), Config.STICK_DEAD_ZONE);
-                double strafeVal = -MathUtils.DeadZone(x.getAsDouble(), Config.STICK_DEAD_ZONE);
-                double rotVal = -MathUtils.DeadZone(r.getAsDouble(), Config.STICK_DEAD_ZONE);
-                self.RegisterJoystickRead(fwdVal, strafeVal, rotVal);
-            }
-        }
-
-        protected static class FollowPathImpl extends Command {
-
-            public PathChain pathChain;
-            public Pose begin;
-            public boolean currentPose;
-
-            public FollowPathImpl(PathChain p) {
-                pathChain = p;
-            }
-
-            public FollowPathImpl(Pose startPose, PathChain p) {
-                pathChain = p;
-                currentPose = true;
-                begin = startPose;
-            }
-
-            public FollowPathImpl(PathChain p, boolean currPose) {
-                pathChain = p;
-                currentPose = currPose;
-                begin = null;
-            }
-
-            @Override
-            public void initialize() {
-                if (currentPose) {
-                    getFollower().setStartingPose(begin == null ? getFollower().getPose() : begin);
-                }
-                getFollower().followPath(pathChain);
-            }
-
-            @Override
-            public boolean isFinished() {
-                return !getFollower().isBusy();
-            }
-
-            @Override
-            public void execute() {
-                getFollower().update();
-            }
+            return Command.noRequirements(cor -> {
+                self.SetVisionRotation();
+            }).named("Vision Rotation");
         }
     }
 
@@ -474,7 +449,7 @@ public class HybridDriveBase {
                    [Audience]
  */
 
-    public static class Component implements Subsystem {
+    public static class Component extends Mechanism {
 
         private static final double HalfPi = Math.PI * 0.5;
         private static final double TwoPi = Math.PI * 2;
@@ -612,6 +587,7 @@ public class HybridDriveBase {
         }
 
         public Component(Follower f, TargetAcquisition viz, Alliance all) {
+            super("Hybrid Drivetrain");
             Commands.self = this;
             started = false;
             follower = f;
@@ -811,7 +787,8 @@ public class HybridDriveBase {
             this.rotation = r;
         }
 
-        @Override
+        // TODO: This should be the default command,  I think?
+        // @Override
         public void periodic() {
             if (pidf.P != P || pidf.I != I || pidf.D != D || pidf.F != F) {
                 // Someone changed the PIDF on the panels: Updated it in realtime...
