@@ -8,10 +8,11 @@ import first.robot.GlobalContext;
 import first.robot.robots.HybridMouseBot;
 import java.time.Duration;
 import java.time.Instant;
+import org.wpilib.driverstation.Alliance;
 import org.wpilib.opmode.Autonomous;
 import org.wpilib.opmode.PeriodicOpMode;
 
-@Autonomous(name = "Looping 50ms Auto", group = "Group 1")
+@Autonomous(name = "Looping 50ms Auto", group = "Blue")
 public class MyAuto extends PeriodicOpMode {
 
     private Instant time;
@@ -30,7 +31,7 @@ public class MyAuto extends PeriodicOpMode {
         this.curNum = 0.0;
         this.delta = 0.025;
         this.which = 3;
-        robot = new HybridMouseBot(globalContext);
+        robot = new HybridMouseBot(globalContext, Alliance.BLUE);
     }
 
     // Called once when this opmode transitions to enabled.

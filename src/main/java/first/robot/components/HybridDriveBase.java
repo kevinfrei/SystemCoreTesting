@@ -453,6 +453,7 @@ public class HybridDriveBase {
 
         private static final double HalfPi = Math.PI * 0.5;
         private static final double TwoPi = Math.PI * 2;
+        private HybridHardwareMap map;
 
         // Encapsulated to allow easy "previous driving style" tracking
         private static class DrivingStyle {
@@ -586,11 +587,12 @@ public class HybridDriveBase {
                 : 0;
         }
 
-        public Component(Follower f, TargetAcquisition viz, Alliance all) {
+        public Component(TargetAcquisition viz, Alliance all) {
             super("Hybrid Drivetrain");
+            map = new HybridHardwareMap();
             Commands.self = this;
             started = false;
-            follower = f;
+            follower = createFollower(map);
             targetAcquisition = viz;
             alliance = all;
             headingOffsetRadians = baseHeadingOffset();
@@ -610,16 +612,16 @@ public class HybridDriveBase {
             SetNormalSpeed();
         }
 
-        public Component(Follower f, Alliance all) {
-            this(f, null, all);
+        public Component(Alliance all) {
+            this(null, all);
         }
 
-        public Component(Follower f, TargetAcquisition viz) {
-            this(f, viz, Alliance.BLUE);
+        public Component(TargetAcquisition viz) {
+            this(viz, Alliance.BLUE);
         }
 
-        public Component(Follower f) {
-            this(f, null, Alliance.BLUE);
+        public Component() {
+            this(null, Alliance.BLUE);
         }
 
         // Command to start autonomous driving)
