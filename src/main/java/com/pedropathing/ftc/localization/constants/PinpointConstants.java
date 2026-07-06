@@ -1,8 +1,9 @@
 package com.pedropathing.ftc.localization.constants;
 
-import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
+import first.support.GoBildaPinpointDriver;
 import java.util.OptionalDouble;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.wpilib.units.DistanceUnit;
+import org.wpilib.units.Units;
 
 /**
  * This is the PinpointConstants class. It holds many constants and parameters for the Pinpoint Localizer.
@@ -23,7 +24,7 @@ public class PinpointConstants {
 
     /** The Unit of Distance that the Pinpoint uses to measure distance
      * Default Value: DistanceUnit.INCH */
-    public DistanceUnit distanceUnit = DistanceUnit.INCH;
+    public DistanceUnit distanceUnit = Units.Inch;
 
     /** The name of the Pinpoint in the hardware map (name of the I2C port it is plugged into)
      * Default Value: "pinpoint" */
@@ -111,7 +112,7 @@ public class PinpointConstants {
     public void defaults() {
         forwardPodY = 1;
         strafePodX = -2.5;
-        distanceUnit = DistanceUnit.INCH;
+        distanceUnit = Units.Inch;
         hardwareMapName = "pinpoint";
         yawScalar = OptionalDouble.empty();
         encoderResolution = GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD;

@@ -1,12 +1,10 @@
-/*
 package com.pedropathing.ftc;
 
 import com.pedropathing.geometry.CoordinateSystem;
 import com.pedropathing.geometry.Pose;
-
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.units.Units;
 
 public class PoseConverter {
 
@@ -16,9 +14,13 @@ public class PoseConverter {
      * @param pose the Pose object
      * @param desiredCoordinateSystem the desired coordinate system
      * @return a Pose2D object with the x and y coordinates in inches and the heading in radians
-     * //
-    public static Pose2D poseToPose2D(Pose pose, CoordinateSystem desiredCoordinateSystem) {
-        return new Pose2D(DistanceUnit.INCH, pose.getAsCoordinateSystem(desiredCoordinateSystem).getX(), pose.getAsCoordinateSystem(desiredCoordinateSystem).getY(), AngleUnit.RADIANS, pose.getAsCoordinateSystem(desiredCoordinateSystem).getHeading());
+     */
+    public static Pose2d poseToPose2D(Pose pose, CoordinateSystem desiredCoordinateSystem) {
+        return new Pose2d(
+            pose.getAsCoordinateSystem(desiredCoordinateSystem).getX(),
+            pose.getAsCoordinateSystem(desiredCoordinateSystem).getY(),
+            Rotation2d.fromRadians(pose.getAsCoordinateSystem(desiredCoordinateSystem).getHeading())
+        );
     }
 
     /**
@@ -27,9 +29,13 @@ public class PoseConverter {
      * @param pose2d the Pose2D object
      * @param coordinateSystem the coordinate system
      * @return a Pose object with the x and y coordinates in inches and the heading in radians
-     * //
-    public static Pose pose2DToPose(Pose2D pose2d, CoordinateSystem coordinateSystem) {
-        return new Pose(pose2d.getX(DistanceUnit.INCH), pose2d.getY(DistanceUnit.INCH), pose2d.getHeading(AngleUnit.RADIANS), coordinateSystem);
+     */
+    public static Pose pose2DToPose(Pose2d pose2d, CoordinateSystem coordinateSystem) {
+        return new Pose(
+            pose2d.getMeasureX().in(Units.Inches),
+            pose2d.getMeasureY().in(Units.Inches),
+            pose2d.getRotation().getRadians(),
+            coordinateSystem
+        );
     }
 }
-*/

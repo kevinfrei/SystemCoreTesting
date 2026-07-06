@@ -10,8 +10,8 @@ import com.pedropathing.math.Vector;
 import com.pedropathing.util.NanoTimer;
 import first.support.GoBildaPinpointDriver;
 import java.util.Objects;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.wpilib.units.DistanceUnit;
+import org.wpilib.units.Units;
 
 /**
  * This is the Pinpoint class. This class extends the Localizer superclass and is a
@@ -37,7 +37,7 @@ public class PinpointLocalizer implements Localizer {
      * This creates a new PinpointLocalizer from a HardwareMap, with a starting Pose at (0,0)
      * facing 0 heading.
      *
-     * @param map the HardwareMap
+     * @param pp the Pinpoint device
      */
     public PinpointLocalizer(GoBildaPinpointDriver pp, PinpointConstants constants) {
         this(pp, constants, new Pose());
@@ -47,7 +47,7 @@ public class PinpointLocalizer implements Localizer {
      * This creates a new PinpointLocalizer from a HardwareMap and a Pose, with the Pose
      * specifying the starting pose of the localizer.
      *
-     * @param map the HardwareMap
+     * @param pp the Pinpoint device
      * @param setStartPose the Pose to start from
      */
     public PinpointLocalizer(
@@ -64,8 +64,8 @@ public class PinpointLocalizer implements Localizer {
 
         if (constants.customEncoderResolution.isPresent()) {
             odo.setEncoderResolution(
-                constants.customEncoderResolution.getAsDouble(),
-                constants.distanceUnit
+                constants.customEncoderResolution.getAsDouble() /*,
+                constants.distanceUnit*/
             );
         } else {
             odo.setEncoderResolution(constants.encoderResolution);
@@ -162,9 +162,11 @@ public class PinpointLocalizer implements Localizer {
             ) * MathFunctions.getTurnDirection(previousHeading, currentPinpointPose.getHeading());
         previousHeading = currentPinpointPose.getHeading();
         currentVelocity = new Pose(
-            odo.getVelX(DistanceUnit.INCH),
-            odo.getVelY(DistanceUnit.INCH),
-            odo.getHeadingVelocity(AngleUnit.RADIANS.getUnnormalized())
+            odo.getVelX(Units.Inch),
+            odo.getVelY(
+                /*Units.Inch*/
+            ) /*,
+            odo.getHeadingVelocity(AngleUnit.RADIANS.getUnnormalized())*/
         );
         pinpointPose = currentPinpointPose;
     }
@@ -214,7 +216,7 @@ public class PinpointLocalizer implements Localizer {
      * @param unit The units that the measurements are given in
      */
     private void setOffsets(double xOffset, double yOffset, DistanceUnit unit) {
-        odo.setOffsets(xOffset, yOffset, unit);
+        odo.setOffsets(xOffset, yOffset /*, unit*/);
     }
 
     /**
@@ -276,16 +278,16 @@ public class PinpointLocalizer implements Localizer {
 
     @Override
     public void setX(double x) {
-        odo.setPosX(x, constants.distanceUnit);
+        odo.setPosX(x /*, constants.distanceUnit*/);
     }
 
     @Override
     public void setY(double y) {
-        odo.setPosY(y, constants.distanceUnit);
+        odo.setPosY(y /*, constants.distanceUnit*/);
     }
 
     @Override
     public void setHeading(double heading) {
-        odo.setHeading(heading, AngleUnit.RADIANS);
+        odo.setHeading(heading /*, AngleUnit.RADIANS*/);
     }
 }
