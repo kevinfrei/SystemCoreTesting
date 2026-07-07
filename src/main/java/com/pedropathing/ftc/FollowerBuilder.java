@@ -4,26 +4,23 @@ import com.pedropathing.drivetrain.Drivetrain;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.follower.FollowerConstants;
 import com.pedropathing.ftc.drivetrains.*;
-import com.pedropathing.ftc.localization.CustomIMU;
 import com.pedropathing.ftc.localization.constants.DriveEncoderConstants;
 // import com.pedropathing.ftc.localization.constants.OctoQuadConstants;
 // import com.pedropathing.ftc.localization.constants.OTOSConstants;
-// import com.pedropathing.ftc.localization.constants.PinpointConstants;
+import com.pedropathing.ftc.localization.constants.PinpointConstants;
 import com.pedropathing.ftc.localization.constants.ThreeWheelConstants;
 import com.pedropathing.ftc.localization.constants.ThreeWheelIMUConstants;
 import com.pedropathing.ftc.localization.constants.TwoWheelConstants;
 import com.pedropathing.ftc.localization.localizers.DriveEncoderLocalizer;
 // import com.pedropathing.ftc.localization.localizers.OctoQuadLocalizer;
 // import com.pedropathing.ftc.localization.localizers.OTOSLocalizer;
-// import com.pedropathing.ftc.localization.localizers.PinpointLocalizer;
+import com.pedropathing.ftc.localization.localizers.PinpointLocalizer;
 import com.pedropathing.ftc.localization.localizers.ThreeWheelIMULocalizer;
 import com.pedropathing.ftc.localization.localizers.ThreeWheelLocalizer;
 import com.pedropathing.ftc.localization.localizers.TwoWheelLocalizer;
 import com.pedropathing.localization.Localizer;
 import com.pedropathing.paths.PathConstraints;
-import com.revrobotics.spark.A301;
-import org.wpilib.hardware.expansionhub.ExpansionHubMotor;
-import org.wpilib.hardware.rotation.Encoder;
+import first.support.GoBildaPinpointDriver;
 
 /**
  * This is the FollowerBuilder.
@@ -55,7 +52,7 @@ public class FollowerBuilder {
         return setLocalizer(new DriveEncoderLocalizer(scm, lConstants));
     }
 
-    /*
+    /* 
     public FollowerBuilder octoQuadLocalizer(OctoQuadConstants lConstants, OctoQuadLocalizer.InitMode initMode) {
         return setLocalizer(new OctoQuadLocalizer(hardwareMap, lConstants, initMode));
     }
@@ -63,11 +60,14 @@ public class FollowerBuilder {
     public FollowerBuilder OTOSLocalizer(OTOSConstants lConstants) {
         return setLocalizer(new OTOSLocalizer(hardwareMap, lConstants));
     }
-
-    public FollowerBuilder pinpointLocalizer(PinpointConstants lConstants) {
-        return setLocalizer(new PinpointLocalizer(hardwareMap, lConstants));
-    }
     */
+
+    public FollowerBuilder pinpointLocalizer(
+        GoBildaPinpointDriver pp,
+        PinpointConstants lConstants
+    ) {
+        return setLocalizer(new PinpointLocalizer(pp, lConstants));
+    }
 
     public FollowerBuilder threeWheelIMULocalizer(
         SystemCoreMap scm,
