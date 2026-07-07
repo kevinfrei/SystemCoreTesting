@@ -12,8 +12,7 @@ import org.wpilib.hardware.rotation.Encoder;
  * This is to replace the hardwareMap thing from the old weird FTC SDK.
  * We have to pass this around, wherever we had to pass the hardware map before.
  */
-public abstract class SystemCoreMap {
-
+public interface SystemCoreMap {
     /**
      * Override this to make your SystemCoreMap tolerant to failing
      * requests.
@@ -21,11 +20,11 @@ public abstract class SystemCoreMap {
      * @return True if you want an exception thrown when requested hardware
      *         is missing
      */
-    protected boolean failOnNull() {
+    default boolean failOnNull() {
         return true;
     }
 
-    public enum HardwareName {
+    enum HardwareName {
         // Drive Base motor selection.
         // These should return an object of type:
         // * com.pedropathing.ftc.drivetrains.SCMotor
@@ -78,7 +77,7 @@ public abstract class SystemCoreMap {
      * @return The object requested, or null
      */
     @Nullable
-    protected abstract Object getHardware(HardwareName nm);
+    Object getHardware(HardwareName nm);
 
     /**
      * This is the helper to get a particular Motor object, by calling
@@ -88,7 +87,7 @@ public abstract class SystemCoreMap {
      * @return an SCMotor interface for the motor requested, or null
      */
     @Nullable
-    public final SCMotor getMotor(HardwareName nm) {
+    default SCMotor getMotor(HardwareName nm) {
         Object motor = getHardware(nm);
         if (motor == null) {
             if (failOnNull()) {
@@ -116,7 +115,7 @@ public abstract class SystemCoreMap {
      * @return an SCMotor interface for the motor requested, or null
      */
     @Nullable
-    public final SCEncoder getEncoder(HardwareName nm) {
+    default SCEncoder getEncoder(HardwareName nm) {
         Object enc = getHardware(nm);
         if (enc == null) {
             if (failOnNull()) {
@@ -145,7 +144,7 @@ public abstract class SystemCoreMap {
      * @return an SCMotor interface for the motor requested, or null
      */
     @Nullable
-    public final CustomIMU getIMU() {
+    default CustomIMU getIMU() {
         Object imu = getHardware(HardwareName.IMU);
         if (imu == null) {
             if (failOnNull()) {

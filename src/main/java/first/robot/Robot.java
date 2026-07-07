@@ -12,7 +12,6 @@ import first.robot.helpers.DualA301Motor;
 import org.jspecify.annotations.Nullable;
 import org.wpilib.driverstation.Gamepad;
 import org.wpilib.framework.OpModeRobot;
-import org.wpilib.hardware.expansionhub.ExpansionHubMotor;
 import org.wpilib.hardware.hal.CANBusMap;
 import org.wpilib.hardware.imu.OnboardIMU;
 
@@ -23,34 +22,25 @@ import org.wpilib.hardware.imu.OnboardIMU;
  * or the package after creating this project, you must also update the Main.java file in the
  * project.
  */
-public class Robot extends OpModeRobot {
+public class Robot extends OpModeRobot implements SystemCoreMap {
 
-    public static class MyHardwareMap extends SystemCoreMap {
-
-        private final Robot r;
-
-        public MyHardwareMap(Robot r) {
-            this.r = r;
-        }
-
-        @Override
-        protected @Nullable Object getHardware(HardwareName nm) {
-            return switch (nm) {
-                // Motors
-                case FRONT_LEFT_MOTOR -> r.frontLeft;
-                case FRONT_RIGHT_MOTOR -> r.frontRight;
-                case REAR_LEFT_MOTOR -> r.rearLeft;
-                case REAR_RIGHT_MOTOR -> r.rearRight;
-                // Encoders
-                case FRONT_LEFT_ENCODER -> r.frontLeft;
-                case FRONT_RIGHT_ENCODER -> r.frontRight;
-                case REAR_LEFT_ENCODER -> r.rearLeft;
-                case REAR_RIGHT_ENCODER -> r.rearRight;
-                // And the IMU...
-                case IMU -> r.imu;
-                default -> null;
-            };
-        }
+    @Override
+    public @Nullable Object getHardware(HardwareName nm) {
+        return switch (nm) {
+            // Motors
+            case FRONT_LEFT_MOTOR -> frontLeft;
+            case FRONT_RIGHT_MOTOR -> frontRight;
+            case REAR_LEFT_MOTOR -> rearLeft;
+            case REAR_RIGHT_MOTOR -> rearRight;
+            // Encoders
+            case FRONT_LEFT_ENCODER -> frontLeft;
+            case FRONT_RIGHT_ENCODER -> frontRight;
+            case REAR_LEFT_ENCODER -> rearLeft;
+            case REAR_RIGHT_ENCODER -> rearRight;
+            // And the IMU...
+            case IMU -> imu;
+            default -> null;
+        };
     }
 
     /* 
@@ -96,8 +86,6 @@ public class Robot extends OpModeRobot {
 
     public final OnboardIMU imu = new OnboardIMU(OnboardIMU.MountOrientation.LANDSCAPE);
 
-    public final SystemCoreMap scm;
-
     // 2 for 2 wheel odo, 4 for 'use the drive encoders'. Let's hope we can attach odo;
     /*
     private final com.pedropathing.ftc.localization.Encoder[] encoders = {
@@ -113,16 +101,14 @@ public class Robot extends OpModeRobot {
      * This function is run when the robot is first started up and should be used for any
      * initialization code.
      */
-    public Robot() {
-        scm = new MyHardwareMap(this);
-    }
+    public Robot() {}
 
     /**
      * This function is called exactly once when the DS first connects.
      */
     @Override
     public void driverStationConnected() {
-        follower = DriveBase.getFollower(scm);
+        follower = DriveBase.getFollower(this);
     }
 
     /**
