@@ -4,11 +4,17 @@
 
 package first.robot;
 
+import com.pedropathing.follower.Follower;
+import com.pedropathing.ftc.SystemCoreMap;
+import com.revrobotics.spark.A301;
+import first.robot.components.DriveBase;
+import first.robot.helpers.DualA301Motor;
+import org.jspecify.annotations.Nullable;
 import org.wpilib.driverstation.Gamepad;
 import org.wpilib.framework.OpModeRobot;
+import org.wpilib.hardware.expansionhub.ExpansionHubMotor;
 import org.wpilib.hardware.hal.CANBusMap;
-
-import com.revrobotics.spark.A301;
+import org.wpilib.hardware.imu.OnboardIMU;
 
 /**
  * The methods in this class are called automatically as described in the OpModeRobot documentation.
@@ -19,27 +25,110 @@ import com.revrobotics.spark.A301;
  */
 public class Robot extends OpModeRobot {
 
-  public final A301 motor1 = new A301(CANBusMap.CAN_D0);
-  public final Gamepad gamepad = new Gamepad(0);
+    public static class MyHardwareMap extends SystemCoreMap {
 
-  /**
-   * This function is run when the robot is first started up and should be used for any
-   * initialization code.
-   */
-  public Robot() {
+        private final Robot r;
 
-  }
+        public MyHardwareMap(Robot r) {
+            this.r = r;
+        }
 
-  /** This function is called exactly once when the DS first connects. */
-  @Override
-  public void driverStationConnected() {
+        @Override
+        protected @Nullable Object getHardware(HardwareName nm) {
+            return switch (nm) {
+                // Motors
+                case FRONT_LEFT_MOTOR -> r.frontLeft;
+                case FRONT_RIGHT_MOTOR -> r.frontRight;
+                case REAR_LEFT_MOTOR -> r.rearLeft;
+                case REAR_RIGHT_MOTOR -> r.rearRight;
+                // Encoders
+                case FRONT_LEFT_ENCODER -> r.frontLeft;
+                case FRONT_RIGHT_ENCODER -> r.frontRight;
+                case REAR_LEFT_ENCODER -> r.rearLeft;
+                case REAR_RIGHT_ENCODER -> r.rearRight;
+                // And the IMU...
+                case IMU -> r.imu;
+                default -> null;
+            };
+        }
+    }
 
-  }
+    /* 
+    public final A301 frontLeft = new A301(DriveBase.Config.flPort);
+    public final A301 frontRight = new A301(DriveBase.Config.frPort);
+    public final A301 rearRight = new A301(DriveBase.Config.rrPort);
+    public final A301 rearLeft = new A301(DriveBase.Config.rlPort);
+    */
+    /* 
+    public final ExpansionHubMotor frontLeft = new ExpansionHubMotor(0, 0);
+    public final ExpansionHubMotor frontRight = new ExpansionHubMotor(0, 1);
+    public final ExpansionHubMotor rearRight = new ExpansionHubMotor(0, 2);
+    public final ExpansionHubMotor rearLeft = new ExpansionHubMotor(0, 3);
+    public final ExpansionHubMotor fbEncoder = new ExpansionHubMotor(1, 0);
+    public final ExpansionHubMotor strfEncoder = new ExpansionHubMotor(0, 0);
+    */
+    public final DualA301Motor frontLeft = new DualA301Motor(
+        new A301(CANBusMap.CAN_D0),
+        new A301(CANBusMap.CAN_D1)
+    );
+    public final DualA301Motor frontRight = new DualA301Motor(
+        new A301(CANBusMap.CAN_D2),
+        new A301(CANBusMap.CAN_D3)
+    );
+    public final DualA301Motor rearLeft = new DualA301Motor(
+        new A301(CANBusMap.CAN_D4),
+        new A301(CANBusMap.CAN_D5)
+    );
+    public final DualA301Motor rearRight = new DualA301Motor(
+        new A301(CANBusMap.CAN_D6),
+        new A301(CANBusMap.CAN_D7)
+    );
+    /*
+    public final Encoder fwdEncoder = new Encoder(
+        DriveBase.Config.fbEncCh0,
+        DriveBase.Config.fbEncCh1
+    );
+    public final Encoder strafEncoder = new Encoder(
+        DriveBase.Config.strafeEncCh0,
+        DriveBase.Config.strafeEncCh1
+    );
+    */
 
-  /**
-   * This function is called periodically anytime when no opmode is selected, including when the
-   * Driver Station is disconnected.
-   */
-  @Override
-  public void nonePeriodic() {}
+    public final OnboardIMU imu = new OnboardIMU(OnboardIMU.MountOrientation.LANDSCAPE);
+
+    public final SystemCoreMap scm;
+
+    // 2 for 2 wheel odo, 4 for 'use the drive encoders'. Let's hope we can attach odo;
+    /*
+    private final com.pedropathing.ftc.localization.Encoder[] encoders = {
+        new SystemCoreEncoder(fwdEncoder),
+        new SystemCoreEncoder(strafEncoder),
+    };
+    */
+
+    public final Gamepad gamepad = new Gamepad(0);
+    public Follower follower = null;
+
+    /**
+     * This function is run when the robot is first started up and should be used for any
+     * initialization code.
+     */
+    public Robot() {
+        scm = new MyHardwareMap(this);
+    }
+
+    /**
+     * This function is called exactly once when the DS first connects.
+     */
+    @Override
+    public void driverStationConnected() {
+        follower = DriveBase.getFollower(scm);
+    }
+
+    /**
+     * This function is called periodically anytime when no opmode is selected, including when the
+     * Driver Station is disconnected.
+     */
+    @Override
+    public void nonePeriodic() {}
 }
