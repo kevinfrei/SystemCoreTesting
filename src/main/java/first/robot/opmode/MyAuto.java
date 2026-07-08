@@ -4,41 +4,37 @@
 
 package first.robot.opmode;
 
-import first.robot.GlobalContext;
-import first.robot.robots.HybridMouseBot;
-import java.time.Duration;
-import java.time.Instant;
+import first.robot.Robot;
+import first.robot.helpers.ElapsedTime;
 import org.wpilib.driverstation.Alliance;
 import org.wpilib.opmode.Autonomous;
 import org.wpilib.opmode.PeriodicOpMode;
 
-@Autonomous(name = "Looping 50ms Auto", group = "Blue")
+@Autonomous(name = "Looping 50ms Auto", group = "Mouse")
 public class MyAuto extends PeriodicOpMode {
 
-    private Instant time;
+    private ElapsedTime timer;
     private double curNum;
     private double delta;
     private double cutOff = 0.5;
-    private int ms = 50;
+    private int ms = 250;
     private int which;
-    private HybridMouseBot robot;
-
-    // TODO: Move the gimbal on MouseBot around
+    private Robot.HybridMouseBot robot;
 
     // The Robot instance is passed into the opmode via the constructor.
-    public MyAuto(GlobalContext globalContext) {
-        this.time = Instant.now();
+    public MyAuto(Robot robot) {
+        this.timer = new ElapsedTime();
         this.curNum = 0.0;
         this.delta = 0.025;
         this.which = 3;
-        robot = new HybridMouseBot(globalContext, Alliance.BLUE);
+        this.robot = new Robot.HybridMouseBot(robot, Alliance.BLUE);
     }
 
     // Called once when this opmode transitions to enabled.
     @Override
     public void start() {
         stopMotion();
-        time = Instant.now();
+        timer.reset();
     }
 
     //
@@ -49,14 +45,12 @@ public class MyAuto extends PeriodicOpMode {
 
     @Override
     public void periodic() {
-        Instant end = Instant.now();
-        long elapsedMillis = Duration.between(time, end).toMillis();
-        if (elapsedMillis > ms) {
+        if (timer.millis() > ms) {
+            timer.reset();
             if (Math.abs(curNum) >= cutOff) {
                 delta = -delta;
             }
             curNum += delta;
-            time = end;
             if (Math.abs(curNum - 0.001) < 0.01) {
                 which = (which + 1) % 7;
             }

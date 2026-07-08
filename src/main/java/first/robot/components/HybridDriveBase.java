@@ -230,7 +230,7 @@ public class HybridDriveBase {
         }
     }
 
-    public static class HybridHardwareMap extends SystemCoreMap {
+    public static class HybridHardwareMap implements SystemCoreMap {
 
         public ExpansionHubMotor fl, fr, bl, br;
 
@@ -242,7 +242,7 @@ public class HybridDriveBase {
         }
 
         @Override
-        protected @Nullable Object getHardware(HardwareName nm) {
+        public @Nullable Object getHardware(HardwareName nm) {
             return switch (nm) {
                 case FRONT_LEFT_MOTOR -> fl;
                 case FRONT_RIGHT_MOTOR -> fr;

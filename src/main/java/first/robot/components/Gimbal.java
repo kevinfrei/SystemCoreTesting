@@ -1,6 +1,6 @@
 package first.robot.components;
 
-import first.robot.GlobalContext;
+import first.robot.Robot;
 import first.robot.helpers.ElapsedTime;
 import first.robot.helpers.HubServo;
 import first.robot.helpers.MathUtils;
@@ -193,7 +193,7 @@ public class Gimbal {
         MedianFilter yawAvg = new MedianFilter(Config.TESTING_ANALOG_SMOOTHING_LEVEL);
         MedianFilter pitchAvg = new MedianFilter(Config.TESTING_ANALOG_SMOOTHING_LEVEL);
 
-        public TestingOpMode(GlobalContext gc) {
+        public TestingOpMode(Robot gc) {
             gamepad1 = gc.g1;
             yaw = new HubServo(Config.USB_ID, Config.YAW_SERVO_PORT);
             pitch = new HubServo(Config.USB_ID, Config.PITCH_SERVO_PORT);

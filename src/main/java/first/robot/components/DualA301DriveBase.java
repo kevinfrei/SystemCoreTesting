@@ -11,9 +11,10 @@ import com.pedropathing.ftc.drivetrains.SCMotor;
 import com.pedropathing.ftc.localization.SCEncoder;
 import com.pedropathing.ftc.localization.constants.DriveEncoderConstants;
 import com.pedropathing.ftc.localization.constants.TwoWheelConstants;
+import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathConstraints;
 import com.revrobotics.spark.A301;
-import first.robot.GlobalContext;
+import first.robot.Robot;
 import first.robot.helpers.DualA301Motor;
 import first.robot.helpers.MathUtils;
 import org.jspecify.annotations.Nullable;
@@ -44,9 +45,9 @@ public class DualA301DriveBase {
         public static int rrA = CANBusMap.CAN_D6;
         public static int rrB = CANBusMap.CAN_D7;
         public static boolean flInvert = true;
-        public static boolean frInvert = true;
+        public static boolean frInvert = false;
         public static boolean rlInvert = true;
-        public static boolean rrInvert = true;
+        public static boolean rrInvert = false;
 
         // IMU Orientation
         public static MountOrientation imuMounting = MountOrientation.LANDSCAPE;
@@ -249,30 +250,8 @@ public class DualA301DriveBase {
         return follower;
     }
 
-    protected static Follower createFollowerWithOdo(DriveBaseHardwareMap theMap) {
-        if (follower == null) {
-            if (DualA301DriveBase.hwMap != null && theMap != DualA301DriveBase.hwMap) {
-                throw new AllocationException(
-                    "Attempt to create a second follower for the singleton drivebase with a different FWDB"
-                );
-            }
-            Follower f = new FollowerBuilder(Config.getFollowerConstants())
-                .pathConstraints(Config.getPathConstraints())
-                .mecanumDrivetrain(hwMap, Config.getDriveConstants())
-                .twoWheelLocalizer(hwMap, Config.Localizer.getTwoWheelConstants())
-                .build();
-            f.setMaxPowerScaling(Config.AUTO_SPEED);
-            follower = f;
-        }
-        return follower;
-    }
-
-    public static Follower getFollowerWithOdo(DriveBaseHardwareMap m) {
-        return createFollower(m);
-    }
-
-    public static Follower getFollower(DriveBaseHardwareMap m) {
-        return createFollower(m);
+    public static Follower getFollower() {
+        return createFollower(hwMap);
     }
 
     // ---------------------- //
@@ -300,8 +279,10 @@ public class DualA301DriveBase {
         );
         public final OnboardIMU imu = new OnboardIMU(Config.imuMounting);
 
-        public Component(GlobalContext r) {
+        public Component(Robot r) {
+            System.out.println("There1");
             super("Drive Base");
+            System.out.println("There2");
         }
     }
 
@@ -314,7 +295,7 @@ public class DualA301DriveBase {
     )
     public static class MotorValidation implements OpMode {
 
-        GlobalContext globalContext;
+        Robot robot;
 
         final DualA301DriveBase.Component drivebase;
         SCMotor fl, fr, rr, rl;
@@ -323,14 +304,18 @@ public class DualA301DriveBase {
         static double CUTOFF = 1.3;
         static double DELTA = 0.4;
 
-        public MotorValidation(GlobalContext globalContext) {
-            this.globalContext = globalContext;
-            g = globalContext.g1;
-            drivebase = new Component(globalContext);
+        public MotorValidation(Robot robot) {
+            this.robot = robot;
+            g = robot.g1;
+            drivebase = new Component(robot);
             fl = drivebase.frontLeft;
             fr = drivebase.frontRight;
             rr = drivebase.rearRight;
             rl = drivebase.rearLeft;
+            fl.setReversed(Config.flInvert);
+            fr.setReversed(Config.frInvert);
+            rl.setReversed(Config.rlInvert);
+            rr.setReversed(Config.rrInvert);
         }
 
         public void start() {
@@ -343,7 +328,7 @@ public class DualA301DriveBase {
             double x = MathUtils.DeadZone(g.getLeftX(), Config.STICK_DEAD_ZONE);
             double y = MathUtils.DeadZone(g.getLeftY(), Config.STICK_DEAD_ZONE);
             // Looking for corners, so both values need to have magnitude >> 0
-            if (Math.abs(x) + Math.abs(y) < CUTOFF || Math.abs(x - y) > DELTA) {
+            if (Math.abs(x) + Math.abs(y) < CUTOFF || Math.abs(Math.abs(x) - Math.abs(y)) > DELTA) {
                 if (!lastZero) {
                     System.out.printf("ZZ X: %f, Y: %f%n", x, y);
                 }
@@ -423,42 +408,81 @@ public class DualA301DriveBase {
         DualA301DriveBase.Component driveBase;
         DriveBaseHardwareMap map;
         Follower f;
-        GlobalContext g;
+        Robot robot;
         Gamepad gp;
+        boolean started = false;
 
-        public PedroValidation(GlobalContext globalContext) {
-            g = globalContext;
-            driveBase = new Component(globalContext);
-            map = new DriveBaseHardwareMap(driveBase);
-            f = createFollower(map);
-            gp = g.g1;
+        public PedroValidation(Robot robot) {
+            try {
+                this.robot = robot;
+                driveBase = new Component(robot);
+                map = new DriveBaseHardwareMap(driveBase);
+                f = createFollower(map);
+                gp = robot.g1;
+            } catch (Exception e) {
+                System.out.printf("Exception!!!%nMessage:%n");
+                System.out.println(e.getMessage());
+                System.out.println("End of this message...");
+            }
         }
 
         public void start() {
+            started = true;
+            f.setStartingPose(new Pose(72, 72, 0));
             f.startTeleOpDrive(false);
         }
 
+        private String last = "";
+
+        private void delta(String s) {
+            if (s.equals(last)) {
+                return;
+            }
+            System.out.println(s);
+            last = s;
+        }
+
         public void periodic() {
+            if (!started) {
+                delta("Why is periodic running when the opmode hasn't started?");
+                return;
+            }
             double fwd = MathUtils.DeadZone(-gp.getLeftY(), Config.STICK_DEAD_ZONE);
             double strafe = MathUtils.DeadZone(gp.getLeftX(), Config.STICK_DEAD_ZONE);
             double rotate = MathUtils.DeadZone(gp.getRightX(), Config.STICK_DEAD_ZONE);
-            System.out.printf("F: %f, S: %f, R: %f%n", fwd, strafe, rotate);
-            f.setTeleOpDrive(fwd, strafe, rotate);
+            Pose p = f.getPose();
+            delta(
+                String.format(
+                    "F: %f, S: %f, R: %f X: %f Y: %f H: %f",
+                    fwd,
+                    strafe,
+                    rotate,
+                    p.getX(),
+                    p.getY(),
+                    p.getHeading()
+                )
+            );
+            f.setTeleOpDrive(fwd, strafe, rotate, false);
+            f.update();
+        }
+
+        public void end() {
+            started = false;
         }
     }
 
     @Utility(name = "Dumb Drive", group = "Drivebase")
     public static class DriveBaseDumb implements OpMode {
 
-        GlobalContext g;
+        Robot g;
         DualA301DriveBase.Component driveBase;
         Gamepad gp;
         SCMotor fl, fr, rr, rl;
 
-        public DriveBaseDumb(GlobalContext globalContext) {
-            g = globalContext;
-            gp = globalContext.g1;
-            driveBase = new Component(globalContext);
+        public DriveBaseDumb(Robot robot) {
+            g = robot;
+            gp = robot.g1;
+            driveBase = new Component(robot);
             fl = driveBase.frontLeft;
             fr = driveBase.frontRight;
             rr = driveBase.rearRight;
@@ -513,22 +537,32 @@ public class DualA301DriveBase {
     @Utility(name = "Field-centric drive", group = "Drivebase")
     public static class DriveBaseTrig implements OpMode {
 
-        GlobalContext g;
+        Robot g;
         DualA301DriveBase.Component driveBase;
         Gamepad gp;
         SCMotor fl, fr, rr, rl;
         OnboardIMU imu;
 
-        public DriveBaseTrig(GlobalContext globalContext) {
-            g = globalContext;
-            gp = globalContext.g1;
-            driveBase = new Component(globalContext);
+        public DriveBaseTrig(Robot robot) {
+            System.out.println("here1");
+            g = robot;
+            System.out.println("here2");
+            gp = robot.g1;
+            System.out.println("here3");
+            driveBase = new Component(robot);
+            System.out.println("here4");
             fl = driveBase.frontLeft;
+            System.out.println("here5");
             fr = driveBase.frontRight;
+            System.out.println("here6");
             rr = driveBase.rearRight;
+            System.out.println("here7");
             rl = driveBase.rearLeft;
+            System.out.println("here8");
             imu = driveBase.imu;
+            System.out.println("here9");
             imu.resetYaw();
+            System.out.println("here10");
         }
 
         public void start() {
