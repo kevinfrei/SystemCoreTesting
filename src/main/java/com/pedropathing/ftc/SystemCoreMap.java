@@ -9,7 +9,7 @@ import org.wpilib.hardware.imu.OnboardIMU;
 import org.wpilib.hardware.rotation.Encoder;
 
 /**
- * This is to replace the hardwareMap thing from the old weird FTC SDK.
+ * This is to replace the hardwareMap thing from the old FTC SDK.
  * We have to pass this around, wherever we had to pass the hardware map before.
  */
 public interface SystemCoreMap {
@@ -57,23 +57,20 @@ public interface SystemCoreMap {
 
     /**
      * User has to override this one method to return the object requested.
-     *
      * Motors supported include:
-     * - {@link com.revrobotics.spark.A301}
-     * - {@link org.wpilib.hardware.expansionhub.ExpansionHubMotor}
-     * - An object that implements the {@link com.pedropathing.ftc.drivetrains.SCMotor} interface
-     *
+     * - {@link A301}
+     * - {@link ExpansionHubMotor}
+     * - An object that implements the {@link SCMotor} interface
      * Encoders supported include:
-     * - {@link org.wpilib.hardware.rotation.Encoder}
-     * - {@link org.wpilib.hardware.expansionhub.ExpansionHubMotor} because, well, that's how you get to those encoders...
-     * - {@link com.revrobotics.spark.A301} if you're using drive motors for odometry.
-     * - An object that implements the {@link com.pedropathing.ftc.localization.SCEncoder} interface
-     *
+     * - {@link Encoder}
+     * - {@link ExpansionHubMotor} because, well, that's how you get to those encoders...
+     * - {@link A301} if you're using drive motors for odometry.
+     * - An object that implements the {@link SCEncoder} interface
      * IMUs supported include:
-     * - {@link org.wpilib.hardware.imu.OnboardIMU}
-     * - An object that implements the {@link com.pedropathing.ftc.localization.CustomIMU} interface
+     * - {@link OnboardIMU}
+     * - An object that implements the {@link CustomIMU} interface
      *
-     * @param nm The {@link com.pedropathing.ftc.SystemCoreMap.HardwareName} item requested
+     * @param nm The {@link HardwareName} item requested
      * @return The object requested, or null
      */
     @Nullable
@@ -81,7 +78,7 @@ public interface SystemCoreMap {
 
     /**
      * This is the helper to get a particular Motor object, by calling
-     * {@link getHardware} with the specific hardware 'name' requested.
+     * {@link #getHardware} getHardware} with the specific hardware 'name' requested.
      *
      * @param nm One of the FL/FR/RR/FL motors
      * @return an SCMotor interface for the motor requested, or null
@@ -89,27 +86,31 @@ public interface SystemCoreMap {
     @Nullable
     default SCMotor getMotor(HardwareName nm) {
         Object motor = getHardware(nm);
-        if (motor == null) {
-            if (failOnNull()) {
-                throw new IllegalArgumentException("No motor for named item " + nm.toString());
+        switch (motor) {
+            case null -> {
+                if (failOnNull()) {
+                    throw new IllegalArgumentException("No motor for named item " + nm.toString());
+                }
+                return null;
             }
-            return null;
+            case SCMotor scMotor -> {
+                return scMotor;
+            }
+            case A301 a301 -> {
+                return new A301Motor(a301);
+            }
+            case ExpansionHubMotor expansionHubMotor -> {
+                return new HubMotor(expansionHubMotor);
+            }
+            default -> throw new IllegalArgumentException(
+                "Unknown motor type returned for " + nm.toString()
+            );
         }
-        if (motor instanceof SCMotor) {
-            return (SCMotor) motor;
-        }
-        if (motor instanceof A301) {
-            return new A301Motor((A301) motor);
-        }
-        if (motor instanceof ExpansionHubMotor) {
-            return new HubMotor((ExpansionHubMotor) motor);
-        }
-        throw new IllegalArgumentException("Unknown motor type returned for " + nm.toString());
     }
 
     /**
      * This is the helper to get a particular Motor object, by calling
-     * {@link getHardware} with the specific hardware 'name' requested.
+     * {@link #getHardware} with the specific hardware 'name' requested.
      *
      * @param nm One of the FL/FR/RR/FL motors
      * @return an SCMotor interface for the motor requested, or null
@@ -117,49 +118,57 @@ public interface SystemCoreMap {
     @Nullable
     default SCEncoder getEncoder(HardwareName nm) {
         Object enc = getHardware(nm);
-        if (enc == null) {
-            if (failOnNull()) {
-                throw new IllegalArgumentException("No encoder for named item " + nm.toString());
+        switch (enc) {
+            case null -> {
+                if (failOnNull()) {
+                    throw new IllegalArgumentException(
+                        "No encoder for named item " + nm.toString()
+                    );
+                }
+                return null;
             }
-            return null;
+            case SCEncoder scEncoder -> {
+                return scEncoder;
+            }
+            case Encoder encoder -> {
+                return new SystemCoreEncoder(encoder);
+            }
+            case ExpansionHubMotor expansionHubMotor -> {
+                return new HubEncoder(expansionHubMotor);
+            }
+            case A301 a301 -> {
+                return new A301Encoder(a301);
+            }
+            default -> throw new IllegalStateException(
+                "Unknown encoder type returned for " + nm.toString()
+            );
         }
-        if (enc instanceof SCEncoder) {
-            return (SCEncoder) enc;
-        }
-        if (enc instanceof Encoder) {
-            return new SystemCoreEncoder((Encoder) enc);
-        }
-        if (enc instanceof ExpansionHubMotor) {
-            return new HubEncoder((ExpansionHubMotor) enc);
-        }
-        if (enc instanceof A301) {
-            return new A301Encoder((A301) enc);
-        }
-        throw new IllegalArgumentException("Unknown encoder type returned for " + nm.toString());
     }
 
     /**
-     * This is the helper to get the IMU from the {@link getHardware} API.
+     * This is the helper to get the IMU from the {@link #getHardware} API.
      *
      * @return an SCMotor interface for the motor requested, or null
      */
     @Nullable
     default CustomIMU getIMU() {
         Object imu = getHardware(HardwareName.IMU);
-        if (imu == null) {
-            if (failOnNull()) {
-                throw new IllegalArgumentException("No IMU found!");
+        switch (imu) {
+            case null -> {
+                if (failOnNull()) {
+                    throw new IllegalArgumentException("No IMU found!");
+                }
+                return null;
             }
-            return null;
+            case CustomIMU customIMU -> {
+                return customIMU;
+            }
+            case OnboardIMU onboardIMU -> {
+                return new SystemCoreIMU(onboardIMU);
+            }
+            default -> throw new IllegalArgumentException(
+                "Unknown IMU type returned from getHardware(HardwareNames.IMU)"
+            );
         }
-        if (imu instanceof CustomIMU) {
-            return (CustomIMU) imu;
-        }
-        if (imu instanceof OnboardIMU) {
-            return new SystemCoreIMU((OnboardIMU) imu);
-        }
-        throw new IllegalArgumentException(
-            "Unknown IMU type returned from getHardware(HardwareNames.IMU)"
-        );
     }
 }

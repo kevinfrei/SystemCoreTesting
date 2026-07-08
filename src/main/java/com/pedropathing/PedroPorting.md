@@ -45,9 +45,11 @@ I started out by just passing the required hardware objects around wherever PP
 was asking for the `hardwareMap`. This worked, but as the next problem arose,
 this became pretty unworkable. So, instead, I created an abstract class
 [`com.pedropathing.ftc.SystemCoreMap`](ftc/SystemCoreMap.java) class that users
-need to extend and [implement a single method](../../first/robot/Robot.java#L26)
+need to extend and
+[implement a single method (getHardware)](../../first/robot/components/DualA301DriveBase.java#L347)
 that provides hardware objects as required. (For folks who care, this is a
-particularly simplistic mechanism to accomplish
+particularly simplistic mechanism, designed to feel somewhat familiar to the old
+FTC SDK, that accomplishes
 [Dependency Injection](https://en.wikipedia.org/wiki/Dependency_injection))
 
 ## Supporting both Hybrid _and_ MotionCore devices
@@ -61,12 +63,15 @@ as in a _stepper motor_. The motors you connect to an expansion hub, however,
 are simple
 [brushed DC motors](https://en.wikipedia.org/wiki/Brushed_DC_electric_motor) we
 all know and love (or hate as they slowly wear out), which may or may not have
-encoders attached. Encoders, on the other, may be attached to a motor on an
-expansion hub, but they're strictly separate devices on SystemCore, but the A301
-motors also have encoders on them, for use with wheel-based odometry. And
-there's also a new IMU which currently doesn't support all 6 configurations you
-might have (apparently FRC people don't have reasons to mount their control
-hardware upside down?)
+encoders attached.
+
+Encoders, on the other, may be attached to a motor on an expansion hub, but
+they're strictly separate devices on SystemCore, **_but_** the A301 motors also
+have encoder-like capabilities built in, so they can also be used with
+wheel-based odometry. And there's also a new IMU which currently doesn't support
+all 6 configurations you might have (apparently FRC people don't have reasons to
+mount their control hardware upside down? It's as if they don't have to fit in
+an 18" cube or something!)
 
 So, first things first: I made interfaces for each of the 3 things that PP uses,
 that are supposed to be strcitly what PP requires, and nothing more:
@@ -75,7 +80,7 @@ that are supposed to be strcitly what PP requires, and nothing more:
 - [SCMotor](ftc/drivetrains/SCMotor.java) The Motor interface
 - [CustomIMU](ftc/localization/CustomIMU.java) An IMU interface
 
-Then, after trying do stick with the 'pass hardware to the thing that needs it'
+Then, after trying to stick with the 'pass hardware to the thing that needs it'
 approach, I realized that having a factory enables a few very helpful things.
 Thus, SystemCoreMap is the factory that creates `SCEncoder`'s, `SCMotor`'s, and
 `CustomIMU`'s. Rather than have multiple different methods for returning motors,
@@ -99,12 +104,13 @@ I just disabled all that stuff in the code. As/if drivers come available, I'll
 go after them as they show up.
 
 And I didn't care much about the Swerve stuff, so I just disabled it for now. We
-have a Swerve bot base that we haven't gotten working yet. I'll probably go port
-that stuff once we have that thing closer to functional...
+have a Swerve bot base but it's really not ready for prime time yet. I'll
+probably go port that stuff once we have that thing working more reliably on the
+FTC SDK...
 
 In Summary:
 
-### TODO:
+#### TODO:
 
 - [ ] Pinpoint Localizer (drivers...)
 - [ ] OTOS Localizer (drivers...)

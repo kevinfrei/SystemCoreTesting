@@ -6,10 +6,30 @@ import org.jspecify.annotations.NonNull;
 
 class A301Motor implements SCMotor {
 
+    @NonNull
     private final A301 motor;
+
+    private enum DriveMode {
+        THROTTLE_BASED,
+        RPM_BASED,
+    }
+
+    private DriveMode mode = DriveMode.RPM_BASED;
+    private double rpm;
+    public static int DEFAULT_RPM = 235;
 
     public A301Motor(@NonNull A301 hardware) {
         motor = hardware;
+        var sig = hardware.getGearboxRPM();
+        rpm = sig.isValid() ? sig.get().value : DEFAULT_RPM;
+    }
+
+    public void ThrottleMode() {
+        mode = DriveMode.THROTTLE_BASED;
+    }
+
+    public void RPMMode() {
+        mode = DriveMode.RPM_BASED;
     }
 
     @Override
@@ -19,7 +39,11 @@ class A301Motor implements SCMotor {
 
     @Override
     public void setPower(double dutyCyle) {
-        motor.setThrottle(dutyCyle);
+        if (mode == DriveMode.THROTTLE_BASED) {
+            motor.setThrottle(dutyCyle);
+        } else {
+            motor.setVelocity(dutyCyle * rpm);
+        }
     }
 
     @Override
