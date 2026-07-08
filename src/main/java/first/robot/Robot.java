@@ -9,6 +9,7 @@ import com.pedropathing.ftc.SystemCoreMap;
 import com.revrobotics.spark.A301;
 import first.robot.components.DriveBase;
 import first.robot.helpers.DualA301Motor;
+import first.support.TunablePedroBot;
 import org.jspecify.annotations.Nullable;
 import org.wpilib.driverstation.Gamepad;
 import org.wpilib.framework.OpModeRobot;
@@ -22,7 +23,7 @@ import org.wpilib.hardware.imu.OnboardIMU;
  * or the package after creating this project, you must also update the Main.java file in the
  * project.
  */
-public class Robot extends OpModeRobot implements SystemCoreMap {
+public class Robot extends OpModeRobot implements SystemCoreMap, TunablePedroBot {
 
     @Override
     public @Nullable Object getHardware(HardwareName nm) {
@@ -95,6 +96,7 @@ public class Robot extends OpModeRobot implements SystemCoreMap {
     */
 
     public final Gamepad gamepad = new Gamepad(0);
+    public final Gamepad gamepad2 = new Gamepad(1);
     public Follower follower = null;
 
     /**
@@ -117,4 +119,19 @@ public class Robot extends OpModeRobot implements SystemCoreMap {
      */
     @Override
     public void nonePeriodic() {}
+
+    @Override
+    public Follower getFollower() {
+        return follower;
+    }
+
+    @Override
+    public Gamepad getGamepad1() {
+        return gamepad;
+    }
+
+    @Override
+    public Gamepad getGamepad2() {
+        return gamepad2;
+    }
 }
