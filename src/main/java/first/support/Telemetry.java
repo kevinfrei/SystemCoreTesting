@@ -27,9 +27,19 @@ public class Telemetry {
     }
 
     public void update(Object o) {
+        int len = 0;
         for (String s : lines) {
-            System.out.println(s);
+            len = Math.max(len, s.length());
         }
+        String top = "*".repeat(len + 4);
+        String spc = "*" + " ".repeat(len + 2) + "*";
+        System.out.println(top);
+        System.out.println(spc);
+        for (String s : lines) {
+            System.out.printf("* %s *%n", s);
+        }
+        System.out.println(spc);
+        System.out.println(top);
         lines.clear();
     }
 

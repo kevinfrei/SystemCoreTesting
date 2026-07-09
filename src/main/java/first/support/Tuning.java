@@ -62,7 +62,7 @@ public abstract class Tuning implements OpMode {
         follower = b.getFollower();
         follower.setStartingPose(new Pose());
         telemetryM = new Telemetry();
-        telemetry = null; // lol
+        telemetry = telemetryM; // lol
     }
 
     public void start() {
@@ -91,11 +91,11 @@ public abstract class Tuning implements OpMode {
         state = State.Stopped;
     }
 
-    public void init() {}
+    public abstract void init();
 
-    public void init_loop() {}
+    public abstract void init_loop();
 
-    public void loop() {}
+    public abstract void loop();
 
     // @IgnoreConfigurable
     static PoseHistory poseHistory;
@@ -1978,23 +1978,24 @@ class OffsetsTuner extends Tuning {
     }
 
     /**
-     * This initializes the PoseUpdater as well as the Panels telemetry. * //
-     *
-     * @Override public void init_loop() {
-     * telemetryM.debug(
-     * "Prerequisite: Make sure both your offsets are set to 0 in your localizer constants."
-     * );
-     * telemetryM.debug(
-     * "Turn your robot " +
-     * Math.PI +
-     * " radians. Your offsets in inches will be shown on the telemetry."
-     * );
-     * telemetryM.update(telemetry);
-     * <p>
-     * drawCurrent();
-     * }
-     * <p>
-     * /**
+     * This initializes the PoseUpdater as well as the Panels telemetry.
+     */
+    @Override
+    public void init_loop() {
+        telemetryM.debug(
+            "Prerequisite: Make sure both your offsets are set to 0 in your localizer constants."
+        );
+        telemetryM.debug(
+            "Turn your robot " +
+                Math.PI +
+                " radians. Your offsets in inches will be shown on the telemetry."
+        );
+        telemetryM.update(telemetry);
+
+        drawCurrent();
+    }
+
+    /**
      * This updates the robot's pose estimate, and updates the Panels telemetry with the
      * calculated offsets and draws the robot.
      */
