@@ -12,12 +12,15 @@ import com.pedropathing.ftc.localization.SCEncoder;
 import com.pedropathing.ftc.localization.constants.DriveEncoderConstants;
 import com.pedropathing.ftc.localization.constants.TwoWheelConstants;
 import com.pedropathing.geometry.Pose;
+import com.pedropathing.paths.PathChain;
 import com.pedropathing.paths.PathConstraints;
 import com.revrobotics.spark.A301;
 import first.robot.Robot;
 import first.robot.helpers.DualA301Motor;
 import first.robot.helpers.MathUtils;
+import java.util.function.DoubleSupplier;
 import org.jspecify.annotations.Nullable;
+import org.wpilib.command3.Command;
 import org.wpilib.command3.Mechanism;
 import org.wpilib.driverstation.Gamepad;
 import org.wpilib.hardware.hal.CANBusMap;
@@ -221,7 +224,96 @@ public class DualA301DriveBase {
     }
 
     // TODO: Put drive base commands in here
-    public static class Commands {}
+    public static class Commands {
+
+        public static Component self;
+
+        // Note that the stick values returned are oriented like this:
+        // Up is a negative value, down is a positive value.
+        // Left is a negative value, right is a positive value.
+        public static Command JoystickDrive(
+            DoubleSupplier fbStick,
+            DoubleSupplier strafeStick,
+            DoubleSupplier rotStick
+        ) {
+            return self
+                .run(coroutine -> {
+                    Follower ensure = DualA301DriveBase.getFollower();
+                    self.StartTele();
+                    while (true) {
+                        // Read the stick values, and pass them to the drive base.
+                        // We invert the signs because both up and left are negative, which is opposite Pedro.
+                        // The drivebase can do all the filtering & drive mode shenanigans it wants. We're just
+                        // here to read the joysticks and send the values to the drivebase...
+                        double fwdVal = -MathUtils.DeadZone(
+                            fbStick.getAsDouble(),
+                            HybridDriveBase.Config.STICK_DEAD_ZONE
+                        );
+                        double strafeVal = -MathUtils.DeadZone(
+                            strafeStick.getAsDouble(),
+                            HybridDriveBase.Config.STICK_DEAD_ZONE
+                        );
+                        double rotVal = -MathUtils.DeadZone(
+                            rotStick.getAsDouble(),
+                            HybridDriveBase.Config.STICK_DEAD_ZONE
+                        );
+                        self.RegisterJoystickRead(fwdVal, strafeVal, rotVal);
+                        coroutine.yield();
+                    }
+                })
+                .named("Joystick drive");
+        }
+
+        public static Command FollowPath(PathChain p) {
+            return FollowPathHelper(null, p, true);
+        }
+
+        public static Command FollowPath(Pose startPose, PathChain p) {
+            return FollowPathHelper(startPose, p, true);
+        }
+
+        public static Command FollowPath(PathChain p, boolean readCurPose) {
+            return FollowPathHelper(null, p, readCurPose);
+        }
+
+        protected static Command FollowPathHelper(
+            Pose startPose,
+            PathChain pathChain,
+            boolean currentPose
+        ) {
+            return self
+                .run(coroutine -> {
+                    Follower f = getFollower();
+                    if (currentPose) {
+                        f.setStartingPose(startPose == null ? f.getPose() : startPose);
+                    }
+                    f.followPath(pathChain);
+                    while (f.isBusy()) {
+                        f.update();
+                        coroutine.yield();
+                    }
+                })
+                .named("Path Follower");
+        }
+
+        public static Command TurboSpeed() {
+            return Command.noRequirements(cor -> {
+                self.SetTurboSpeed();
+            }).named("Turbo Speed");
+        }
+
+        public static Command SnailSpeed() {
+            return Command.noRequirements(cor -> {
+                self.SetSnailSpeed();
+            }).named("Snail Speed");
+        }
+
+        public static Command NormalSpeed() {
+            return Command.noRequirements(cor -> {
+                self.SetNormalSpeed();
+            }).named("Normal Speed");
+        }
+    }
 
     // ------------------------ //
     // Begin PedroPathing stuff //
@@ -261,6 +353,14 @@ public class DualA301DriveBase {
     // TODO: Flesh this out from Decode's LearnBot: drive styles & whatnot...
     public static class Component extends Mechanism {
 
+        protected enum DriveSpeed {
+            Snail,
+            Normal,
+            Turbo,
+        }
+
+        protected DriveSpeed speed = DriveSpeed.Normal;
+
         public final DualA301Motor frontLeft = new DualA301Motor(
             new A301(Config.flA),
             new A301(Config.flB)
@@ -278,11 +378,53 @@ public class DualA301DriveBase {
             new A301(Config.rrB)
         );
         public final OnboardIMU imu = new OnboardIMU(Config.imuMounting);
+        private Gamepad gp;
 
         public Component(Robot r) {
             System.out.println("There1");
             super("Drive Base");
             System.out.println("There2");
+            Commands.self = this;
+            gp = r.getGamepad1();
+            // Register the joystick drive command as the default command for the drivetrain
+            this.setDefaultCommand(
+                Commands.JoystickDrive(
+                    () -> gp.getLeftY(),
+                    () -> gp.getLeftX(),
+                    () -> gp.getRightX()
+                )
+            );
+        }
+
+        public void StartTele() {
+            follower.startTeleOpDrive();
+        }
+
+        public void RegisterJoystickRead(double fwd, double strafe, double rotate) {
+            follower.setTeleOpDrive(fwd, strafe, rotate);
+            follower.update();
+        }
+
+        public void SetSnailSpeed() {
+            speed = DriveSpeed.Snail;
+            setMotorsMultiplier(Config.SNAIL_SPEED);
+        }
+
+        public void SetNormalSpeed() {
+            speed = DriveSpeed.Normal;
+            setMotorsMultiplier(Config.NORMAL_SPEED);
+        }
+
+        public void SetTurboSpeed() {
+            speed = DriveSpeed.Turbo;
+            setMotorsMultiplier(Config.TURBO_SPEED);
+        }
+
+        private void setMotorsMultiplier(double d) {
+            frontLeft.setMultiplier(d);
+            frontRight.setMultiplier(d);
+            rearLeft.setMultiplier(d);
+            rearRight.setMultiplier(d);
         }
     }
 
