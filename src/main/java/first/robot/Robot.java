@@ -34,6 +34,9 @@ public class Robot extends OpModeRobot implements TunablePedroBot {
         if (dual != null) {
             return DualA301DriveBase.getFollower();
         }
+        if (mouse != null) {
+            return HybridDriveBase.getFollower();
+        }
         return null;
     }
 
@@ -47,8 +50,8 @@ public class Robot extends OpModeRobot implements TunablePedroBot {
 
     public static class DualDriveBaseBot {
 
-        private final Robot robot;
-        private final DualA301DriveBase.Component driveBase;
+        public final Robot robot;
+        public final DualA301DriveBase.Component driveBase;
         public final OnboardIMU imu = new OnboardIMU(OnboardIMU.MountOrientation.LANDSCAPE);
 
         public DualDriveBaseBot(Robot r) {
