@@ -19,7 +19,12 @@
  *   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *   SOFTWARE.
  */
+
+// This was shamelessly yoinked from github.com/ftc19458/Hydrostatic
+
 package first.support;
+
+import static org.wpilib.units.Units.*;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -30,12 +35,18 @@ import java.util.stream.Stream;
 import org.wpilib.hardware.bus.I2C;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
-import org.wpilib.units.AngleUnit;
-import org.wpilib.units.DistanceUnit;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.units.LinearVelocityUnit;
+import org.wpilib.units.measure.Angle;
+import org.wpilib.units.measure.AngularVelocity;
+import org.wpilib.units.measure.Distance;
+import org.wpilib.units.measure.LinearVelocity;
 
-public class GoBildaPinpointDriver {
+public class GoBildaPinpoint {
 
-    private I2C i2c;
+    public static final LinearVelocityUnit MillimetersPerSecond = Millimeters.per(Second);
+
+    private final I2C i2c;
 
     private int deviceID = 0;
     private int deviceVersion = 0;
@@ -81,8 +92,8 @@ public class GoBildaPinpointDriver {
 
     private ErrorDetectionType errorDetectionType = ErrorDetectionType.LOCAL_TEST;
 
-    private static final float goBILDA_SWINGARM_POD = 13.26291192f; //ticks-per-mm for the goBILDA Swingarm Pod
-    private static final float goBILDA_4_BAR_POD = 19.89436789f; //ticks-per-mm for the goBILDA 4-Bar Pod
+    private static final float goBILDA_SWINGARM_POD = 13.26291192f; // ticks-per-mm for the goBILDA Swingarm Pod
+    private static final float goBILDA_4_BAR_POD = 19.89436789f; // ticks-per-mm for the goBILDA 4-Bar Pod
 
     private final int CRC_SIZE = 1;
 
@@ -90,10 +101,10 @@ public class GoBildaPinpointDriver {
     private final byte CRC_POLYNOMIAL_VALUE = (byte) 0x31;
     private final byte CRC_FINAL_XOR_VALUE = (byte) 0x00;
 
-    //i2c address of the device
+    // i2c address of the device
     private static final byte DEFAULT_ADDRESS = 0x31;
 
-    public GoBildaPinpointDriver(I2C.Port port) {
+    public GoBildaPinpoint(I2C.Port port) {
         i2c = new I2C(port, DEFAULT_ADDRESS);
     }
 
@@ -106,7 +117,9 @@ public class GoBildaPinpointDriver {
     }
 
     /**
-     * Captures the length of each type of register used on the device. Aside from BULK_READ all registers are 4 bytes long
+     * Captures the length of each type of register used on the device. Aside from
+     * BULK_READ all
+     * registers are 4 bytes long
      */
     private enum RegisterType {
         INT32(4),
@@ -121,7 +134,7 @@ public class GoBildaPinpointDriver {
         }
     }
 
-    //Register map of the i2c device
+    // Register map of the i2c device
     public enum Register {
         DEVICE_ID(1, RegisterType.INT32),
         DEVICE_VERSION(2, RegisterType.INT32),
@@ -158,7 +171,7 @@ public class GoBildaPinpointDriver {
         }
     }
 
-    //Device Status enum that captures the current fault condition of the device
+    // Device Status enum that captures the current fault condition of the device
     public enum DeviceStatus {
         NOT_READY(0),
         READY(1),
@@ -176,24 +189,26 @@ public class GoBildaPinpointDriver {
         }
     }
 
-    //enum that captures the direction the encoders are set to
+    // enum that captures the direction the encoders are set to
     public enum EncoderDirection {
         FORWARD,
         REVERSED,
     }
 
-    //enum that captures the kind of goBILDA odometry pods, if goBILDA pods are used
+    // enum that captures the kind of goBILDA odometry pods, if goBILDA pods are
+    // used
     public enum GoBildaOdometryPods {
         goBILDA_SWINGARM_POD,
         goBILDA_4_BAR_POD,
     }
 
-    //enum that captures a limited scope of read data. More options may be added in future update
+    // enum that captures a limited scope of read data. More options may be added in
+    // future update
     public enum ReadData {
         ONLY_UPDATE_HEADING,
     }
 
-    //Device Control enum that has the values to set
+    // Device Control enum that has the values to set
     private enum DeviceControl {
         RECALIBRATE_IMU(1 << 0),
         RESET_POS_AND_IMU(1 << 1),
@@ -349,114 +364,85 @@ public class GoBildaPinpointDriver {
     }
 
     /**
-     * Saves either an int or a float to the private variable associated to a register.
+     * Saves either an int or a float to the private variable associated to a
+     * register.
      *
      * @param register to save data from
      * @param dataI    the integer to write, if applicable
      * @param dataF    the float to write, if applicable
      */
     private void saveData(Register register, int dataI, float dataF) {
-        final int positionThreshold = 5000; //more than one FTC field in mm
-        final int headingThreshold = 120; //About 20 full rotations in Radians
-        final int velocityThreshold = 10000; //10k mm/sec is faster than an FTC robot should be going...
-        final int headingVelocityThreshold = 120; //About 20 rotations per second
+        final int positionThreshold = 5000; // more than one FTC field in mm
+        final int headingThreshold = 120; // About 20 full rotations in Radians
+        final int velocityThreshold = 10000; // 10k mm/sec is faster than an FTC robot should be going...
+        final int headingVelocityThreshold = 120; // About 20 rotations per second
 
         switch (register) {
-            case DEVICE_ID:
-                deviceID = dataI;
-                break;
-            case DEVICE_VERSION:
-                deviceVersion = dataI;
-                break;
-            case DEVICE_STATUS:
-                deviceStatus = dataI;
-                break;
-            case LOOP_TIME:
-                loopTime = dataI;
-                break;
-            case X_ENCODER_VALUE:
-                xEncoderValue = dataI;
-                break;
-            case Y_ENCODER_VALUE:
-                yEncoderValue = dataI;
-                break;
-            case X_POSITION:
+            case DEVICE_ID -> deviceID = dataI;
+            case DEVICE_VERSION -> deviceVersion = dataI;
+            case DEVICE_STATUS -> deviceStatus = dataI;
+            case LOOP_TIME -> loopTime = dataI;
+            case X_ENCODER_VALUE -> xEncoderValue = dataI;
+            case Y_ENCODER_VALUE -> yEncoderValue = dataI;
+            case X_POSITION -> {
                 if (errorDetectionType == ErrorDetectionType.LOCAL_TEST) {
                     dataF = isPositionCorrupt(xPosition, dataF, positionThreshold, false);
                 }
                 xPosition = dataF;
-                break;
-            case Y_POSITION:
+            }
+            case Y_POSITION -> {
                 if (errorDetectionType == ErrorDetectionType.LOCAL_TEST) {
                     dataF = isPositionCorrupt(yPosition, dataF, positionThreshold, false);
                 }
                 yPosition = dataF;
-                break;
-            case H_ORIENTATION:
+            }
+            case H_ORIENTATION -> {
                 if (errorDetectionType == ErrorDetectionType.LOCAL_TEST) {
                     dataF = isPositionCorrupt(hOrientation, dataF, headingThreshold, false);
                 }
                 hOrientation = dataF;
-                break;
-            case X_VELOCITY:
+            }
+            case X_VELOCITY -> {
                 if (errorDetectionType == ErrorDetectionType.LOCAL_TEST) {
                     dataF = isVelocityCorrupt(xVelocity, dataF, velocityThreshold, false);
                 }
                 xVelocity = dataF;
-                break;
-            case Y_VELOCITY:
+            }
+            case Y_VELOCITY -> {
                 if (errorDetectionType == ErrorDetectionType.LOCAL_TEST) {
                     dataF = isVelocityCorrupt(yVelocity, dataF, velocityThreshold, false);
                 }
                 yVelocity = dataF;
-                break;
-            case H_VELOCITY:
+            }
+            case H_VELOCITY -> {
                 if (errorDetectionType == ErrorDetectionType.LOCAL_TEST) {
                     dataF = isVelocityCorrupt(hVelocity, dataF, headingVelocityThreshold, false);
                 }
                 hVelocity = dataF;
-                break;
-            case MM_PER_TICK:
-                mmPerTick = dataF;
-                break;
-            case X_POD_OFFSET:
-                xPodOffset = dataF;
-                break;
-            case Y_POD_OFFSET:
-                yPodOffset = dataF;
-                break;
-            case YAW_SCALAR:
-                yawScalar = dataF;
-                break;
-            case QUATERNION_W:
-                quaternionW = dataF;
-                break;
-            case QUATERNION_X:
-                quaternionX = dataF;
-                break;
-            case QUATERNION_Y:
-                quaternionY = dataF;
-                break;
-            case QUATERNION_Z:
-                quaternionZ = dataF;
-                break;
-            case PITCH:
-                pitch = dataF;
-                break;
-            case ROLL:
-                roll = dataF;
-                break;
+            }
+            case MM_PER_TICK -> mmPerTick = dataF;
+            case X_POD_OFFSET -> xPodOffset = dataF;
+            case Y_POD_OFFSET -> yPodOffset = dataF;
+            case YAW_SCALAR -> yawScalar = dataF;
+            case QUATERNION_W -> quaternionW = dataF;
+            case QUATERNION_X -> quaternionX = dataF;
+            case QUATERNION_Y -> quaternionY = dataF;
+            case QUATERNION_Z -> quaternionZ = dataF;
+            case PITCH -> pitch = dataF;
+            case ROLL -> roll = dataF;
         }
     }
 
     /**
-     * checks a given byteArray[] for a valid CRC data signature by comparing a calculated CRC to the one received in the read.
+     * checks a given byteArray[] for a valid CRC data signature by comparing a
+     * calculated CRC to the
+     * one received in the read.
      *
      * @param byteArray    data to validate.
-     * @param registerType The kind of register validated. Can be FLOAT, INT32, or BULK.
+     * @param registerType The kind of register validated. Can be FLOAT, INT32, or
+     *                     BULK.
      * @return true if CRC validates the data. False otherwise.
      */
-
     private boolean checkCRC(byte[] byteArray, RegisterType registerType) {
         if (registerType == RegisterType.BULK) {
             int readLength = bulkReadScope.length * RegisterType.GENERIC.length;
@@ -508,12 +494,15 @@ public class GoBildaPinpointDriver {
     }
 
     /**
-     * Confirm that the number received is a number, and does not include a change above the threshold
+     * Confirm that the number received is a number, and does not include a change
+     * above the threshold
      *
      * @param oldValue   the reading from the previous cycle
      * @param newValue   the new reading
-     * @param threshold  the maximum change between this reading and the previous one
-     * @param bulkUpdate true if we are updating the loopTime variable. If not it should be false.
+     * @param threshold  the maximum change between this reading and the previous
+     *                   one
+     * @param bulkUpdate true if we are updating the loopTime variable. If not it
+     *                   should be false.
      * @return newValue if the position is good, oldValue otherwise
      */
     private Float isPositionCorrupt(
@@ -536,7 +525,8 @@ public class GoBildaPinpointDriver {
     }
 
     /**
-     * Confirm that the number received is a number, and does not include a change above the threshold
+     * Confirm that the number received is a number, and does not include a change
+     * above the threshold
      *
      * @param oldValue  the reading from the previous cycle
      * @param newValue  the new reading
@@ -561,8 +551,11 @@ public class GoBildaPinpointDriver {
     }
 
     /**
-     * Reads the BULK_READ register depending on how the bulkReadScope is configured and saves data to local variables.
-     * if CRC is enabled, and a bad CRC is detected on the BulkRead, then no data will be saved.
+     * Reads the BULK_READ register depending on how the bulkReadScope is configured
+     * and saves data to
+     * local variables. if CRC is enabled, and a bad CRC is detected on the
+     * BulkRead, then no data
+     * will be saved.
      */
     private void flexBulkRead() {
         byte[] bArr;
@@ -585,7 +578,7 @@ public class GoBildaPinpointDriver {
         for (int i = 0; i < bulkReadScope.length; i++) {
             int index = i * RegisterType.GENERIC.length;
             switch (bulkReadScope[i].registerType) {
-                case INT32:
+                case INT32 -> {
                     int dataI = byteArrayToInt(
                         Arrays.copyOfRange(
                             bArr,
@@ -595,8 +588,8 @@ public class GoBildaPinpointDriver {
                         ByteOrder.LITTLE_ENDIAN
                     );
                     saveData(bulkReadScope[i], dataI, 0);
-                    break;
-                case FLOAT:
+                }
+                case FLOAT -> {
                     float dataF = byteArrayToFloat(
                         Arrays.copyOfRange(
                             bArr,
@@ -606,20 +599,23 @@ public class GoBildaPinpointDriver {
                         ByteOrder.LITTLE_ENDIAN
                     );
                     saveData(bulkReadScope[i], 0, dataF);
-                    break;
+                }
             }
         }
     }
 
     /**
-     * For devices with version 1 or version 2 firmware, this reads a fixed length BULK_READ register. <br>
-     * A warning is thrown if CRC is requested as CRC was not enabled on V1 or V2 devices.
+     * For devices with version 1 or version 2 firmware, this reads a fixed length
+     * BULK_READ register.
+     * <br>
+     * A warning is thrown if CRC is requested as CRC was not enabled on V1 or V2
+     * devices.
      */
     private void fixedBulkRead() {
-        final int positionThreshold = 5000; //more than one FTC field in mm
-        final int headingThreshold = 120; //About 20 full rotations in Radians
-        final int velocityThreshold = 10000; //10k mm/sec is faster than an FTC robot should be going...
-        final int headingVelocityThreshold = 120; //About 20 rotations per second
+        final int positionThreshold = 5000; // more than one FTC field in mm
+        final int headingThreshold = 120; // About 20 full rotations in Radians
+        final int velocityThreshold = 10000; // 10k mm/sec is faster than an FTC robot should be going...
+        final int headingVelocityThreshold = 120; // About 20 rotations per second
 
         float oldPosX = xPosition;
         float oldPosY = yPosition;
@@ -641,12 +637,15 @@ public class GoBildaPinpointDriver {
         hVelocity = byteArrayToFloat(Arrays.copyOfRange(bArr, 36, 40), ByteOrder.LITTLE_ENDIAN);
 
         switch (errorDetectionType) {
-            case CRC:
-                throw new RuntimeException("CRC Error Handling Not Supported by this Firmware");
-            case LOCAL_TEST:
+            case CRC -> throw new RuntimeException(
+                "CRC Error Handling Not Supported by this Firmware"
+            );
+            case LOCAL_TEST -> {
                 /*
-                 * Check to see if any of the floats we have received from the device are NaN or are too large
-                 * if they are, we return the previously read value and alert the user via the DeviceStatus Enum.
+                 * Check to see if any of the floats we have received from the device are NaN or
+                 * are too large
+                 * if they are, we return the previously read value and alert the user via the
+                 * DeviceStatus Enum.
                  */
                 xPosition = isPositionCorrupt(oldPosX, xPosition, positionThreshold, true);
                 yPosition = isPositionCorrupt(oldPosY, yPosition, positionThreshold, true);
@@ -654,12 +653,14 @@ public class GoBildaPinpointDriver {
                 xVelocity = isVelocityCorrupt(oldVelX, xVelocity, velocityThreshold, true);
                 yVelocity = isVelocityCorrupt(oldVelY, yVelocity, velocityThreshold, true);
                 hVelocity = isVelocityCorrupt(oldVelH, hVelocity, headingVelocityThreshold, true);
-                break;
+            }
         }
     }
 
     /**
-     * Reads a register and saves the data found there to the local variable. Uses either CRC or Local error detection.
+     * Reads a register and saves the data found there to the local variable. Uses
+     * either CRC or Local
+     * error detection.
      *
      * @param register register to read
      */
@@ -669,7 +670,7 @@ public class GoBildaPinpointDriver {
         byte[] temp = readBytes(register.bVal, RegisterType.GENERIC.length + CRC_SIZE);
 
         switch (register.registerType) {
-            case INT32:
+            case INT32 -> {
                 if (checkCRC(temp, RegisterType.INT32) || !checkCRC) {
                     saveData(
                         register,
@@ -682,8 +683,8 @@ public class GoBildaPinpointDriver {
                 } else {
                     deviceStatus = DeviceStatus.FAULT_BAD_READ.status;
                 }
-                break;
-            case FLOAT:
+            }
+            case FLOAT -> {
                 if (checkCRC(temp, RegisterType.FLOAT) || !checkCRC) {
                     saveData(
                         register,
@@ -696,15 +697,15 @@ public class GoBildaPinpointDriver {
                 } else {
                     deviceStatus = DeviceStatus.FAULT_BAD_READ.status;
                 }
-                break;
-            case BULK:
-                update();
-                break;
+            }
+            case BULK -> update();
         }
     }
 
     /**
-     * Call this once per loop to read new data from the Odometry Computer. Data will only update once this is called.
+     * Call this once per loop to read new data from the Odometry Computer. Data
+     * will only update once
+     * this is called.
      */
     public void update() {
         if (deviceVersion == 0) {
@@ -720,11 +721,13 @@ public class GoBildaPinpointDriver {
     }
 
     /**
-     * Call this once per loop to read new data from the Odometry Computer. This is an override of the update() function
-     * which allows a narrower range of data to be read from the device for faster read times. Currently ONLY_UPDATE_HEADING
-     * is supported.
+     * Call this once per loop to read new data from the Odometry Computer. This is
+     * an override of the
+     * update() function which allows a narrower range of data to be read from the
+     * device for faster
+     * read times. Currently ONLY_UPDATE_HEADING is supported.
      *
-     * @param data GoBildaPinpointDriver.ReadData.ONLY_UPDATE_HEADING
+     * @param data GoBildaPinpoint.ReadData.ONLY_UPDATE_HEADING
      */
     public void update(ReadData data) {
         if (data == ReadData.ONLY_UPDATE_HEADING) {
@@ -746,10 +749,13 @@ public class GoBildaPinpointDriver {
     }
 
     /**
-     * Only supported on V3 firmware and above. This configures the registers that are read in bulk
-     * when .update() is called. Use this to minimize read times based on your unique application.
+     * Only supported on V3 firmware and above. This configures the registers that
+     * are read in bulk
+     * when .update() is called. Use this to minimize read times based on your
+     * unique application.
      *
-     * @param registers An array of registers, add registers that you need data from frequently.
+     * @param registers An array of registers, add registers that you need data from
+     *                  frequently.
      */
     public void setBulkReadScope(Register... registers) {
         if (deviceVersion == 0) {
@@ -775,49 +781,80 @@ public class GoBildaPinpointDriver {
             for (int i = 0; i < arrayList.size(); i++) {
                 arr[i] = arrayList.get(i);
             }
-            writeByteArray(Register.SET_BULK_READ, arr); //write all registers sequentially
+            writeByteArray(Register.SET_BULK_READ, arr); // write all registers sequentially
         }
     }
 
     /**
-     * The kind of error correction used on the I²C communication from the device. <br><br>
+     * The kind of error correction used on the I²C communication from the device.
+     * <br>
+     * <br>
      * NONE: This does not check the data, and passes it directly to the user. <br>
-     * CRC: This uses CRC8 error detection to catch incorrect reads. - Only supported by devices with V3 firmware or newer.<br>
-     * LOCAL_TEST: "Controller only" validation that ensures that the data is !NAN, is not all zeros, and is a reasonable number.
-     * This is faster than CRC but may not catch every erroneous read.<br>
+     * CRC: This uses CRC8 error detection to catch incorrect reads. - Only
+     * supported by devices with
+     * V3 firmware or newer.<br>
+     * LOCAL_TEST: "Controller only" validation that ensures that the data is !NAN,
+     * is not all zeros,
+     * and is a reasonable number. This is faster than CRC but may not catch every
+     * erroneous read.<br>
+     *
+     * @param e The kind of error correction used on the I²C communication from the
+     *          device.
      */
     public void setErrorDetectionType(ErrorDetectionType e) {
         errorDetectionType = e;
     }
 
     /**
-     * Sets the odometry pod positions relative to the point that the odometry computer tracks around.<br><br>
-     * The most common tracking position is the center of the robot. <br> <br>
-     * The X pod offset refers to how far sideways from the tracking point the X (forward) odometry pod is. Left of the center is a positive number, right of center is a negative number. <br>
-     * the Y pod offset refers to how far forwards from the tracking point the Y (strafe) odometry pod is. forward of center is a positive number, backwards is a negative number.<br>
+     * Sets the odometry pod positions relative to the point that the odometry
+     * computer tracks around.
+     * <br>
+     * <br>
+     * The most common tracking position is the center of the robot. <br>
+     * <br>
+     * The X pod offset refers to how far sideways from the tracking point the X
+     * (forward) odometry
+     * pod is. Left of the center is a positive number, right of center is a
+     * negative number. <br>
+     * the Y pod offset refers to how far forwards from the tracking point the Y
+     * (strafe) odometry pod
+     * is. forward of center is a positive number, backwards is a negative
+     * number.<br>
      *
-     * @param xOffset      how sideways from the center of the robot is the X (forward) pod? Left increases
-     * @param yOffset      how far forward from the center of the robot is the Y (Strafe) pod? forward increases
-     * @param distanceUnit the unit of distance used for offsets.
+     * @param xOffset how sideways from the center of the robot is the X (forward)
+     *                pod? Left increases
+     * @param yOffset how far forward from the center of the robot is the Y (Strafe)
+     *                pod? forward
+     *                increases
      */
-    public void setOffsets(double xOffsetmm, double yOffsetmm) {
-        writeFloat(Register.X_POD_OFFSET, (float) xOffsetmm);
-        writeFloat(Register.Y_POD_OFFSET, (float) yOffsetmm);
+    public void setOffsets(Distance xOffset, Distance yOffset) {
+        writeFloat(Register.X_POD_OFFSET, (float) xOffset.in(Millimeters));
+        writeFloat(Register.Y_POD_OFFSET, (float) yOffset.in(Millimeters));
     }
 
     /**
-     * Recalibrates the Odometry Computer's internal IMU. <br><br>
-     * <strong> Robot MUST be stationary </strong> <br><br>
-     * Device takes a large number of samples, and uses those as the gyroscope zero-offset. This takes approximately 0.25 seconds.
+     * Recalibrates the Odometry Computer's internal IMU. <br>
+     * <br>
+     * <strong> Robot MUST be stationary </strong> <br>
+     * <br>
+     * Device takes a large number of samples, and uses those as the gyroscope
+     * zero-offset. This takes
+     * approximately 0.25 seconds.
      */
     public void recalibrateIMU() {
         writeInt(Register.DEVICE_CONTROL, DeviceControl.RECALIBRATE_IMU.value);
     }
 
     /**
-     * Resets the current position to 0,0,0 and recalibrates the Odometry Computer's internal IMU. <br><br>
-     * <strong> Robot MUST be stationary </strong> <br><br>
-     * Device takes a large number of samples, and uses those as the gyroscope zero-offset. This takes approximately 0.25 seconds.
+     * Resets the current position to 0,0,0 and recalibrates the Odometry Computer's
+     * internal IMU.
+     * <br>
+     * <br>
+     * <strong> Robot MUST be stationary </strong> <br>
+     * <br>
+     * Device takes a large number of samples, and uses those as the gyroscope
+     * zero-offset. This takes
+     * approximately 0.25 seconds.
      */
     public void resetPosAndIMU() {
         writeInt(Register.DEVICE_CONTROL, DeviceControl.RESET_POS_AND_IMU.value);
@@ -826,8 +863,12 @@ public class GoBildaPinpointDriver {
     /**
      * Can reverse the direction of each encoder.
      *
-     * @param xEncoder FORWARD or REVERSED, X (forward) pod should increase when the robot is moving forward
-     * @param yEncoder FORWARD or REVERSED, Y (strafe) pod should increase when the robot is moving left
+     * @param xEncoder FORWARD or REVERSED, X (forward) pod should increase when the
+     *                 robot is moving
+     *                 forward
+     * @param yEncoder FORWARD or REVERSED, Y (strafe) pod should increase when the
+     *                 robot is moving
+     *                 left
      */
     public void setEncoderDirections(EncoderDirection xEncoder, EncoderDirection yEncoder) {
         if (xEncoder == EncoderDirection.FORWARD) {
@@ -846,12 +887,15 @@ public class GoBildaPinpointDriver {
     }
 
     /**
-     * This allows you to set the encoder resolution by the type of GoBilda pod you are using.
-     * If you aren't using a GoBilda pod, use setEncoderResolution(double) instead. <br><br>
+     * This allows you to set the encoder resolution by the type of GoBilda pod you
+     * are using. If you
+     * aren't using a GoBilda pod, use setEncoderResolution(double) instead. <br>
+     * <br>
      *
      * @param pods goBILDA_SWINGARM_POD or goBILDA_4_BAR_POD
      */
     public void setEncoderResolution(GoBildaOdometryPods pods) {
+        System.out.printf("GBPP: EncRes ");
         if (pods == GoBildaOdometryPods.goBILDA_SWINGARM_POD) {
             setEncoderResolution(goBILDA_SWINGARM_POD);
         }
@@ -862,10 +906,13 @@ public class GoBildaPinpointDriver {
 
     /**
      * Sets the encoder resolution in ticks per mm of the odometry pods. <br>
-     * You can find this number by dividing the counts-per-revolution of your encoder by the circumference of the wheel.
+     * You can find this number by dividing the counts-per-revolution of your
+     * encoder by the
+     * circumference of the wheel.
      *
-     * @param ticksPerUnit should be somewhere between 10 ticks/mm and 100 ticks/mm a goBILDA Swingarm pod is ~13.26291192
-     * @param distanceUnit unit used for distance
+     * @param ticksPerUnit should be somewhere between 10 ticks/mm and 100 ticks/mm
+     *                     a goBILDA Swingarm
+     *                     pod is ~13.26291192
      */
     public void setEncoderResolution(double ticksPerUnit) {
         double resolution = 1.0 / ticksPerUnit;
@@ -877,11 +924,28 @@ public class GoBildaPinpointDriver {
 
     /**
      * Tuning this value should be unnecessary.<br>
-     * The goBILDA Odometry Computer has a per-device tuned yaw offset already applied when you receive it.<br><br>
-     * This is a scalar that is applied to the gyro's yaw value. Increasing it will mean it will report more than one degree for every degree the sensor fusion algorithm measures. <br><br>
-     * You can tune this variable by rotating the robot a large amount (10 full turns is a good starting place) and comparing the amount that the robot rotated to the amount measured.
-     * Rotating the robot exactly 10 times should measure 3600°. If it measures more or less, divide moved amount by the measured amount and apply that value to the Yaw Offset.<br><br>
-     * If you find that to get an accurate heading number you need to apply a scalar of more than 1.05, or less than 0.95, your device may be bad. Please reach out to tech@gobilda.com
+     * The goBILDA Odometry Computer has a per-device tuned yaw offset already
+     * applied when you
+     * receive it.<br>
+     * <br>
+     * This is a scalar that is applied to the gyro's yaw value. Increasing it will
+     * mean it will
+     * report more than one degree for every degree the sensor fusion algorithm
+     * measures. <br>
+     * <br>
+     * You can tune this variable by rotating the robot a large amount (10 full
+     * turns is a good
+     * starting place) and comparing the amount that the robot rotated to the amount
+     * measured.
+     * Rotating the robot exactly 10 times should measure 3600°. If it measures more
+     * or less, divide
+     * moved amount by the measured amount and apply that value to the Yaw
+     * Offset.<br>
+     * <br>
+     * If you find that to get an accurate heading number you need to apply a scalar
+     * of more than
+     * 1.05, or less than 0.95, your device may be bad. Please reach out to
+     * tech@gobilda.com
      *
      * @param yawScalar A scalar for the robot's heading.
      */
@@ -893,76 +957,101 @@ public class GoBildaPinpointDriver {
     }
 
     /**
-     * Send a position that the Pinpoint should use to track your robot relative to. You can use this to
-     * update the estimated position of your robot with new external sensor data, or to run a robot
-     * in field coordinates. <br><br>
-     * This overrides the current position. <br><br>
-     * <strong>Using this feature to track your robot's position in field coordinates:</strong> <br>
-     * When you start your code, send a Pose2D that describes the starting position on the field of your robot. <br>
-     * Say you're on the red alliance, your robot is against the wall and closer to the audience side,
-     * and the front of your robot is pointing towards the center of the field.
-     * You can send a setPosition with something like -600mm x, -1200mm Y, and 90 degrees. The pinpoint would then always
-     * keep track of how far away from the center of the field you are. <br><br>
-     * <strong>Using this feature to update your position with additional sensors: </strong><br>
-     * Some robots have a secondary way to locate their robot on the field. This is commonly
-     * Apriltag localization in FTC, but it can also be something like a distance sensor.
-     * Often these external sensors are absolute (meaning they measure something about the field)
-     * so their data is very accurate. But they can be slower to read, or you may need to be in a very specific
-     * position on the field to use them. In that case, spend most of your time relying on the Pinpoint
-     * to determine your location. Then when you pull a new position from your secondary sensor,
-     * send a setPosition command with the new position. The Pinpoint will then track your movement
-     * relative to that new, more accurate position.
+     * Send a position that the Pinpoint should use to track your robot relative to.
+     * You can use this
+     * to update the estimated position of your robot with new external sensor data,
+     * or to run a robot
+     * in field coordinates. <br>
+     * <br>
+     * This overrides the current position. <br>
+     * <br>
+     * <strong>Using this feature to track your robot's position in field
+     * coordinates:</strong> <br>
+     * When you start your code, send a Pose2D that describes the starting position
+     * on the field of
+     * your robot. <br>
+     * Say you're on the red alliance, your robot is against the wall and closer to
+     * the audience side,
+     * and the front of your robot is pointing towards the center of the field. You
+     * can send a
+     * setPosition with something like -600mm x, -1200mm Y, and 90 degrees. The
+     * pinpoint would then
+     * always keep track of how far away from the center of the field you are. <br>
+     * <br>
+     * <strong>Using this feature to update your position with additional sensors:
+     * </strong><br>
+     * Some robots have a secondary way to locate their robot on the field. This is
+     * commonly Apriltag
+     * localization in FTC, but it can also be something like a distance sensor.
+     * Often these external
+     * sensors are absolute (meaning they measure something about the field) so
+     * their data is very
+     * accurate. But they can be slower to read, or you may need to be in a very
+     * specific position on
+     * the field to use them. In that case, spend most of your time relying on the
+     * Pinpoint to
+     * determine your location. Then when you pull a new position from your
+     * secondary sensor, send a
+     * setPosition command with the new position. The Pinpoint will then track your
+     * movement relative
+     * to that new, more accurate position.
      *
      * @param pos a Pose2D describing the robot's new position.
      */
     public void setPosition(Pose2d pos) {
-        setPosX(pos.getX());
-        setPosY(pos.getY());
-        setHeading(pos.getRotation().getRadians());
+        setPosX(pos.getMeasureX());
+        setPosY(pos.getMeasureY());
+        setHeading(pos.getRotation());
     }
 
     /**
-     * Send a X position that the Pinpoint should use to track your robot relative to.
-     * You can use this to update the estimated position of your robot with new external
-     * sensor data, or to run a robot in field coordinates.
+     * Send a X position that the Pinpoint should use to track your robot relative
+     * to. You can use
+     * this to update the estimated position of your robot with new external sensor
+     * data, or to run a
+     * robot in field coordinates.
      *
-     * @param posX         the new X position you'd like the Pinpoint to track your robot relive to.
-     * @param distanceUnit the unit for posX
+     * @param posX the new X position you'd like the Pinpoint to track your robot
+     *             relative to.
      */
-    public void setPosX(double posX) {
+    public void setPosX(Distance posX) {
         writeByteArray(
             Register.X_POSITION,
-            floatToByteArray((float) posX, ByteOrder.LITTLE_ENDIAN)
+            floatToByteArray((float) posX.in(Millimeters), ByteOrder.LITTLE_ENDIAN)
         );
     }
 
     /**
-     * Send a Y position that the Pinpoint should use to track your robot relative to.
-     * You can use this to update the estimated position of your robot with new external
-     * sensor data, or to run a robot in field coordinates.
+     * Send a Y position that the Pinpoint should use to track your robot relative
+     * to. You can use
+     * this to update the estimated position of your robot with new external sensor
+     * data, or to run a
+     * robot in field coordinates.
      *
-     * @param posY         the new Y position you'd like the Pinpoint to track your robot relive to.
-     * @param distanceUnit the unit for posY
+     * @param posY the new Y position you'd like the Pinpoint to track your robot
+     *             relative to.
      */
-    public void setPosY(double posY) {
+    public void setPosY(Distance posY) {
         writeByteArray(
             Register.Y_POSITION,
-            floatToByteArray((float) posY, ByteOrder.LITTLE_ENDIAN)
+            floatToByteArray((float) posY.in(Millimeters), ByteOrder.LITTLE_ENDIAN)
         );
     }
 
     /**
      * Send a heading that the Pinpoint should use to track your robot relative to.
-     * You can use this to update the estimated position of your robot with new external
-     * sensor data, or to run a robot in field coordinates.
+     * You can use this
+     * to update the estimated position of your robot with new external sensor data,
+     * or to run a robot
+     * in field coordinates.
      *
-     * @param heading   the new heading you'd like the Pinpoint to track your robot relive to.
-     * @param angleUnit Radians or Degrees
+     * @param heading the new heading you'd like the Pinpoint to track your robot
+     *                relative to.
      */
-    public void setHeading(double heading) {
+    public void setHeading(Rotation2d heading) {
         writeByteArray(
             Register.H_ORIENTATION,
-            floatToByteArray((float) Math.toRadians(heading), ByteOrder.LITTLE_ENDIAN)
+            floatToByteArray((float) heading.getRadians(), ByteOrder.LITTLE_ENDIAN)
         );
     }
 
@@ -999,25 +1088,36 @@ public class GoBildaPinpointDriver {
     }
 
     /**
-     * Device Status stores any faults the Odometry Computer may be experiencing. These faults include:
+     * Device Status stores any faults the Odometry Computer may be experiencing.
+     * These faults
+     * include:
      *
      * @return one of the following states:<br>
-     * NOT_READY - The device is currently powering up. And has not initialized yet. RED LED<br>
-     * READY - The device is currently functioning as normal. GREEN LED<br>
-     * CALIBRATING - The device is currently recalibrating the gyro. RED LED<br>
-     * FAULT_NO_PODS_DETECTED - the device does not detect any pods plugged in. PURPLE LED <br>
-     * FAULT_X_POD_NOT_DETECTED - The device does not detect an X pod plugged in. BLUE LED <br>
-     * FAULT_Y_POD_NOT_DETECTED - The device does not detect a Y pod plugged in. ORANGE LED <br>
-     * FAULT_BAD_READ - The Java code has detected a bad I²C read, the result reported is a
-     * duplicate of the last good read.
+     *         NOT_READY - The device is currently powering up. And has not
+     *         initialized yet. RED LED<br>
+     *         READY - The device is currently functioning as normal. GREEN LED<br>
+     *         CALIBRATING - The device is currently recalibrating the gyro. RED
+     *         LED<br>
+     *         FAULT_NO_PODS_DETECTED - the device does not detect any pods plugged
+     *         in. PURPLE LED <br>
+     *         FAULT_X_POD_NOT_DETECTED - The device does not detect an X pod
+     *         plugged in. BLUE LED <br>
+     *         FAULT_Y_POD_NOT_DETECTED - The device does not detect a Y pod plugged
+     *         in. ORANGE LED <br>
+     *         FAULT_BAD_READ - The Java code has detected a bad I²C read, the
+     *         result reported is a
+     *         duplicate of the last good read.
      */
     public DeviceStatus getDeviceStatus() {
         return lookupStatus(deviceStatus);
     }
 
     /**
-     * Checks the Odometry Computer's most recent loop time.<br><br>
-     * If values less than 500, or more than 1100 are commonly seen here, there may be something wrong with your device. Please reach out to tech@gobilda.com
+     * Checks the Odometry Computer's most recent loop time.<br>
+     * <br>
+     * If values less than 500, or more than 1100 are commonly seen here, there may
+     * be something wrong
+     * with your device. Please reach out to tech@gobilda.com
      *
      * @return loop time in microseconds (1/1,000,000 seconds)
      */
@@ -1026,8 +1126,11 @@ public class GoBildaPinpointDriver {
     }
 
     /**
-     * Checks the Odometry Computer's most recent loop frequency.<br><br>
-     * If values less than 900, or more than 2000 are commonly seen here, there may be something wrong with your device. Please reach out to tech@gobilda.com
+     * Checks the Odometry Computer's most recent loop frequency.<br>
+     * <br>
+     * If values less than 900, or more than 2000 are commonly seen here, there may
+     * be something wrong
+     * with your device. Please reach out to tech@gobilda.com
      *
      * @return Pinpoint Frequency in Hz (loops per second),
      */
@@ -1060,80 +1163,98 @@ public class GoBildaPinpointDriver {
     }
 
     /**
-     * @param distanceUnit the unit that the estimated position will return in
-     * @return the estimated X (forward) position of the robot in specified unit
+     * @return the estimated X (forward) position of the robot as a Distance
      */
-    public double getPosX() {
+    public Distance getPosX() {
         if (registerNotInBulkRead(Register.X_POSITION)) {
             readRegister(Register.X_POSITION);
         }
-        return xPosition;
+        return Millimeters.of(xPosition);
     }
 
     /**
-     * @param distanceUnit the unit that the estimated position will return in
-     * @return the estimated Y (Strafe) position of the robot in specified unit
+     * @return the estimated Y (Strafe) position of the robot as a Distance
      */
-    public double getPosY() {
+    public Distance getPosY() {
         if (registerNotInBulkRead(Register.Y_POSITION)) {
             readRegister(Register.Y_POSITION);
         }
-        return yPosition;
+        return Millimeters.of(yPosition);
     }
 
     /**
-     * @return the normalized estimated H (heading) position of the robot in specified unit
-     * normalized heading is wrapped from -180°, to 180°.
+     * @return the normalized estimated H (heading) position of the robot normalized
+     *         heading is
+     *         wrapped from -180°, to 180°.
      */
-    public double getHeading() {
+    public Rotation2d getHeading() {
         if (registerNotInBulkRead(Register.H_ORIENTATION)) {
             readRegister(Register.H_ORIENTATION);
         }
-        return hOrientation;
+        return Rotation2d.fromRadians(hOrientation);
     }
 
     /**
-     * @return the estimated X (forward) velocity of the robot in specified unit/sec
+     * @return the estimated X (forward) velocity of the robot as a LinearVelocity
      */
-    public double getVelX(DistanceUnit distanceUnit) {
+    public LinearVelocity getVelX() {
         if (registerNotInBulkRead(Register.X_VELOCITY)) {
             readRegister(Register.X_VELOCITY);
         }
-        return xVelocity;
+        return MillimetersPerSecond.of(xVelocity);
     }
 
     /**
-     * @return the estimated Y (strafe) velocity of the robot in specified unit/sec
+     * @return the estimated Y (strafe) velocity of the robot as a LinearVelocity
      */
-    public double getVelY() {
+    public LinearVelocity getVelY() {
         if (registerNotInBulkRead(Register.Y_VELOCITY)) {
             readRegister(Register.Y_VELOCITY);
         }
-        return yVelocity;
+        return MillimetersPerSecond.of(yVelocity);
+    }
+
+    /**
+     * @return the estimated heading velocity of the robot as an AngularVelocity
+     */
+    public AngularVelocity getVelHeading() {
+        if (registerNotInBulkRead(Register.H_VELOCITY)) {
+            readRegister(Register.H_VELOCITY);
+        }
+        return RadiansPerSecond.of(hVelocity);
+    }
+
+    /**
+     * @return the estimated chassis velocities of the robot as a ChassisVelocities
+     *         object. This
+     *         contains the X, Y, and heading velocities of the robot.
+     */
+    public ChassisVelocities getChassisVelocities() {
+        return new ChassisVelocities(getVelX(), getVelY(), getVelHeading());
     }
 
     /**
      * <strong> This uses its own I2C read, avoid calling this every loop. </strong>
      *
-     * @return the user-set offset for the X (forward) pod in specified unit
+     * @return the user-set offset for the X (forward) pod as a Distance
      */
-    public float getXOffset(DistanceUnit distanceUnit) {
+    public Distance getXOffset() {
         if (registerNotInBulkRead(Register.X_POD_OFFSET)) {
             readRegister(Register.X_POD_OFFSET);
         }
-        return (float) xPodOffset;
+        return Millimeters.of(xPodOffset);
     }
 
     /**
      * <strong> This uses its own I2C read, avoid calling this every loop. </strong>
      *
-     * @return the user-set offset for the Y (strafe) pod
+     * @return the user-set offset for the Y (strafe) pod as a Distance
      */
-    public float getYOffset(DistanceUnit distanceUnit) {
+    public Distance getYOffset() {
         if (registerNotInBulkRead(Register.Y_POD_OFFSET)) {
             readRegister(Register.Y_POD_OFFSET);
         }
-        return (float) yPodOffset;
+        return Millimeters.of(yPodOffset);
     }
 
     /**
@@ -1149,14 +1270,13 @@ public class GoBildaPinpointDriver {
         if (registerNotInBulkRead(Register.H_ORIENTATION)) {
             readRegister(Register.H_ORIENTATION);
         }
-        return new Pose2d(xPosition, yPosition, Rotation2d.fromRadians(getHeading()));
+        return new Pose2d(xPosition, yPosition, getHeading());
     }
 
     /**
-     * @return the current pitch of the device in the specified AngleUnit.
+     * @return the current pitch of the device as an Angle.
      */
-
-    public double getPitch(AngleUnit angleUnit) {
+    public Angle getPitch() {
         if (deviceVersion == 0) {
             readInt(Register.DEVICE_VERSION);
         }
@@ -1166,14 +1286,14 @@ public class GoBildaPinpointDriver {
             if (registerNotInBulkRead(Register.PITCH)) {
                 pitch = readFloat(Register.PITCH);
             }
-            return pitch;
+            return Radians.of(pitch);
         }
     }
 
     /**
-     * @return the current roll of the device in the specified AngleUnit.
+     * @return the current roll of the device as an Angle.
      */
-    public double getRoll(AngleUnit angleUnit) {
+    public Angle getRoll() {
         if (deviceVersion == 0) {
             readInt(Register.DEVICE_VERSION);
         }
@@ -1183,7 +1303,7 @@ public class GoBildaPinpointDriver {
             if (registerNotInBulkRead(Register.ROLL)) {
                 roll = readFloat(Register.ROLL);
             }
-            return roll;
+            return Radians.of(roll);
         }
     }
 }

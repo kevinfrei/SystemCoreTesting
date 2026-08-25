@@ -8,13 +8,20 @@ import com.pedropathing.ftc.FollowerBuilder;
 import com.pedropathing.ftc.SystemCoreMap;
 import com.pedropathing.ftc.drivetrains.MecanumConstants;
 import com.pedropathing.ftc.drivetrains.SCMotor;
-import com.pedropathing.ftc.localization.CustomIMU;
 import com.pedropathing.ftc.localization.SCEncoder;
 import com.pedropathing.ftc.localization.constants.DriveEncoderConstants;
+import com.pedropathing.ftc.localization.constants.PinpointConstants;
 import com.pedropathing.ftc.localization.constants.TwoWheelConstants;
+import com.pedropathing.ftc.localization.localizers.DriveEncoderLocalizer;
+import com.pedropathing.ftc.localization.localizers.PinpointLocalizer;
+import com.pedropathing.ftc.localization.localizers.TwoWheelLocalizer;
+import com.pedropathing.geometry.Pose;
+import com.pedropathing.localization.Localizer;
 import com.pedropathing.paths.PathConstraints;
-import com.revrobotics.spark.A301;
 import first.robot.Robot;
+import first.support.GoBildaPinpoint;
+import first.support.GoBildaPinpoint.GoBildaOdometryPods;
+import javax.management.InvalidApplicationException;
 import org.wpilib.command2.SubsystemBase;
 import org.wpilib.driverstation.Gamepad;
 import org.wpilib.hardware.hal.CANBusMap;
@@ -22,23 +29,18 @@ import org.wpilib.hardware.hal.util.AllocationException;
 import org.wpilib.hardware.imu.OnboardIMU;
 import org.wpilib.opmode.OpMode;
 import org.wpilib.opmode.Teleop;
+import org.wpilib.opmode.Utility;
+import org.wpilib.units.Units;
 
 public class DriveBase {
 
     public static class Config {
 
         /* HARDWARE CONFIGURATION */
-        // Ports for the A301 motors
-        public static int flPort = CANBusMap.CAN_D0;
-        public static int frPort = CANBusMap.CAN_D1;
-        public static int rrPort = CANBusMap.CAN_D2;
-        public static int rlPort = CANBusMap.CAN_D3;
-
-        // Ports for the odopod encoders
-        public static int fbEncCh0 = 0;
-        public static int fbEncCh1 = 1;
-        public static int strafeEncCh0 = 0;
-        public static int strafeEncCh1 = 1;
+        public static boolean FL_INVERTED = true;
+        public static boolean FR_INVERTED = false;
+        public static boolean RL_INVERTED = true;
+        public static boolean RR_INVERTED = false;
 
         /* SOFTWARE CONFIGURATION */
         // Max power scaling for translational driving:
@@ -81,7 +83,8 @@ public class DriveBase {
         // "Kalman filtering": T in this constructor is the % of the previous
         // derivative that should be used to calculate the derivative.
         // (D is "Derivative" in PIDF...)
-        // Tristan says Kalman Filtering is for curve prediction, so...it helps predict ac/deceleration?
+        // Tristan says Kalman Filtering is for curve prediction, so...it helps predict
+        // ac/deceleration?
         public static FilteredPIDFCoefficients drivePID = new FilteredPIDFCoefficients(
             0.005,
             0.00001,
@@ -135,15 +138,33 @@ public class DriveBase {
         public static MecanumConstants getDriveConstants() {
             return new MecanumConstants()
                 .maxPower(1)
-                .leftFrontMotorInverted(true)
-                .leftRearMotorInverted(true)
-                .rightFrontMotorInverted(false)
-                .rightRearMotorInverted(false)
+                .leftFrontMotorInverted(FL_INVERTED)
+                .leftRearMotorInverted(RL_INVERTED)
+                .rightFrontMotorInverted(FR_INVERTED)
+                .rightRearMotorInverted(RR_INVERTED)
                 .xVelocity(xVelocity)
                 .yVelocity(yVelocity);
         }
 
-        public static class Localizer {
+        public static Localizer getLocalizer(SystemCoreMap scm) {
+            return switch (Localization.WhichLocalizer) {
+                case Localization.LocalizerSelection.USE_PINPOINT -> new PinpointLocalizer(
+                    scm,
+                    Localization.getPinpointConstants()
+                );
+                case Localization.LocalizerSelection.USE_MOTORS -> new DriveEncoderLocalizer(
+                    scm,
+                    Localization.getDriveEncoderConstants()
+                );
+                case Localization.LocalizerSelection.USE_TWO_WHEEL -> new TwoWheelLocalizer(
+                    scm,
+                    Localization.getTwoWheelConstants()
+                );
+                default -> null;
+            };
+        }
+
+        public static class Localization {
 
             public static class MotorLocConfig {
 
@@ -163,18 +184,18 @@ public class DriveBase {
                 public static double StrafePodDirection = SCEncoder.REVERSE;
                 public static double ForwardPodTicksToInches = 2000 / ((Math.PI * 32) / 25.4);
                 public static double StrafePodTicksToInches = 2000 / ((Math.PI * 32) / 25.4);
-                public static double ForwardPodY = -2.5;
-                public static double StrafePodX = 0.25;
+                public static double ForwardPodY = 0; // Use the offset tuner [-2.5]
+                public static double StrafePodX = 0; // Use the offset tuner [0.25]
             }
 
             public enum LocalizerSelection {
                 USE_MOTORS,
                 USE_TWO_WHEEL,
-                USE_OTOS,
+                // USE_OTOS,
                 USE_PINPOINT,
             }
 
-            public static LocalizerSelection WhichLocalizer = LocalizerSelection.USE_TWO_WHEEL;
+            public static LocalizerSelection WhichLocalizer = LocalizerSelection.USE_PINPOINT;
 
             public static DriveEncoderConstants getDriveEncoderConstants() {
                 return new DriveEncoderConstants()
@@ -199,7 +220,30 @@ public class DriveBase {
                     .strafePodX(TwoWheelConfig.StrafePodX)
                     .IMU_Orientation(TwoWheelConfig.orientation);
             }
+
+            public static PinpointConstants getPinpointConstants() {
+                return new PinpointConstants()
+                    .forwardPodY(TwoWheelConfig.ForwardPodY)
+                    .strafePodX(TwoWheelConfig.StrafePodX)
+                    .strafeEncoderDirection(
+                        TwoWheelConfig.StrafePodDirection == SCEncoder.REVERSE
+                            ? GoBildaPinpoint.EncoderDirection.REVERSED
+                            : GoBildaPinpoint.EncoderDirection.FORWARD
+                    )
+                    .forwardEncoderDirection(
+                        TwoWheelConfig.ForwardPodDirection == SCEncoder.REVERSE
+                            ? GoBildaPinpoint.EncoderDirection.REVERSED
+                            : GoBildaPinpoint.EncoderDirection.FORWARD
+                    )
+                    .distanceUnit(Units.Inch);
+            }
         }
+    }
+
+    public enum Speed {
+        Snail,
+        Normal,
+        Turbo,
     }
 
     // TODO: Put drive base commands in here
@@ -212,7 +256,6 @@ public class DriveBase {
     protected static SystemCoreMap scm = null;
     protected static Follower follower = null;
 
-    // No encoders connected: Just use the 4wdb odo, too
     protected static Follower createFollower(SystemCoreMap theScm) {
         if (follower == null) {
             if (DriveBase.scm != null && theScm != DriveBase.scm) {
@@ -224,34 +267,13 @@ public class DriveBase {
             Follower f = new FollowerBuilder(Config.getFollowerConstants())
                 .pathConstraints(Config.getPathConstraints())
                 .mecanumDrivetrain(scm, Config.getDriveConstants())
-                .driveEncoderLocalizer(scm, Config.Localizer.getDriveEncoderConstants())
+                .setLocalizer(Config.getLocalizer(scm))
                 .build();
             f.setMaxPowerScaling(Config.AUTO_SPEED);
             follower = f;
+            f.setStartingPose(new Pose(0, 0, 0));
         }
         return follower;
-    }
-
-    protected static Follower createFollowerWithOdo(SystemCoreMap theScm) {
-        if (follower == null) {
-            if (DriveBase.scm != null && theScm != DriveBase.scm) {
-                throw new AllocationException(
-                    "Attempt to create a second follower for the singleton drivebase with a different FWDB"
-                );
-            }
-            Follower f = new FollowerBuilder(Config.getFollowerConstants())
-                .pathConstraints(Config.getPathConstraints())
-                .mecanumDrivetrain(scm, Config.getDriveConstants())
-                .twoWheelLocalizer(scm, Config.Localizer.getTwoWheelConstants())
-                .build();
-            f.setMaxPowerScaling(Config.AUTO_SPEED);
-            follower = f;
-        }
-        return follower;
-    }
-
-    public static Follower getFollowerWithOdo(SystemCoreMap scm) {
-        return createFollower(scm);
     }
 
     public static Follower getFollower(SystemCoreMap scm) {
@@ -272,7 +294,7 @@ public class DriveBase {
 
     // Validation opmodes below:
 
-    @Teleop(name = "Test Motors", group = "DBComp")
+    @Utility(name = "Test Motors", group = "DBComponent")
     public static class MotorValidation implements OpMode {
 
         SCMotor fl, fr, rr, rl;
@@ -343,31 +365,84 @@ public class DriveBase {
         }
     }
 
-    @Teleop(name = "Pedro Tele", group = "DBComp")
+    @Teleop(name = "Pedro Tele", group = "DBComponent")
     public static class PedroValidation implements OpMode {
 
         Follower f;
         Gamepad g;
+        boolean actuallyStarted;
 
         public PedroValidation(Robot robot) {
             f = robot.follower;
             g = robot.gamepad;
+            actuallyStarted = false;
         }
 
         public void start() {
             f.startTeleOpDrive(false);
+            actuallyStarted = true;
         }
 
+        public void end() {
+            actuallyStarted = false;
+        }
+
+        Speed speed = Speed.Normal;
+
+        protected double getSpeedMult() {
+            return switch (speed) {
+                case Speed.Normal -> Config.NORMAL_SPEED;
+                case Speed.Snail -> Config.SNAIL_SPEED;
+                case Speed.Turbo -> Config.TURBO_SPEED;
+            };
+        }
+
+        protected double getTurnMult() {
+            return switch (speed) {
+                case Speed.Normal -> Config.NORMAL_TURN;
+                case Speed.Snail -> Config.SNAIL_TURN;
+                case Speed.Turbo -> Config.TURBO_TURN;
+            };
+        }
+
+        protected double fwdScale(double val) {
+            return Math.copySign(val * val, val) * getSpeedMult();
+        }
+
+        protected double strafeScale(double val) {
+            return Math.copySign(val * val, val) * getSpeedMult();
+        }
+
+        protected double rotateScale(double val) {
+            return Math.copySign(val * val, val) * getTurnMult();
+        }
+
+        int mask = 127;
+        int lastCount = 0;
+
         public void periodic() {
+            lastCount = (lastCount + 1) & mask;
+            if (!actuallyStarted) {
+                return;
+            }
+            f.update();
             double fwd = deadZone(-g.getLeftY());
-            double strafe = deadZone(g.getLeftX());
-            double rotate = deadZone(g.getRightX());
-            System.out.printf("F: %f, S: %f, R: %f%n", fwd, strafe, rotate);
-            f.setTeleOpDrive(fwd, strafe, rotate);
+            double strafe = deadZone(-g.getLeftX());
+            double rotate = deadZone(-g.getRightX());
+            f.setTeleOpDrive(fwdScale(fwd), strafeScale(strafe), rotateScale(rotate));
+            if (lastCount == 0) {
+                Pose p = f.getPose();
+                System.out.printf(
+                    "x:%.1f y:%.1f h:%.1f%n",
+                    p.getX(),
+                    p.getY(),
+                    Math.toDegrees(p.getHeading())
+                );
+            }
         }
     }
 
-    @Teleop(name = "Dumb Drive", group = "DBComp")
+    @Utility(name = "Dumb Drive", group = "DBComponent")
     public static class DriveBaseDumb implements OpMode {
 
         Gamepad g;
@@ -426,7 +501,7 @@ public class DriveBase {
         }
     }
 
-    @Teleop(name = "Trig Drive", group = "DBComp")
+    @Teleop(name = "Trig Drive", group = "DBComponent")
     public static class DriveBaseTrig implements OpMode {
 
         Gamepad g;
@@ -493,9 +568,11 @@ public class DriveBase {
     }
 
     public static double deadZone(double val) {
-        double DEAD_ZONE = 0.05;
-        if (Math.abs(val) > DEAD_ZONE) {
-            return Math.copySign((Math.abs(val) - DEAD_ZONE) / (1 - DEAD_ZONE), val);
+        if (Math.abs(val) > Config.STICK_DEAD_ZONE) {
+            return Math.copySign(
+                (Math.abs(val) - Config.STICK_DEAD_ZONE) / (1 - Config.STICK_DEAD_ZONE),
+                val
+            );
         }
         return 0;
     }

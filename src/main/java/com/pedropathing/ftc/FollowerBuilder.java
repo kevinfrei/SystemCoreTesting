@@ -20,7 +20,7 @@ import com.pedropathing.ftc.localization.localizers.ThreeWheelLocalizer;
 import com.pedropathing.ftc.localization.localizers.TwoWheelLocalizer;
 import com.pedropathing.localization.Localizer;
 import com.pedropathing.paths.PathConstraints;
-import first.support.GoBildaPinpointDriver;
+import first.support.GoBildaPinpoint;
 
 /**
  * This is the FollowerBuilder.
@@ -62,11 +62,8 @@ public class FollowerBuilder {
     }
     */
 
-    public FollowerBuilder pinpointLocalizer(
-        GoBildaPinpointDriver pp,
-        PinpointConstants lConstants
-    ) {
-        return setLocalizer(new PinpointLocalizer(pp, lConstants));
+    public FollowerBuilder pinpointLocalizer(SystemCoreMap scm, PinpointConstants lConstants) {
+        return setLocalizer(new PinpointLocalizer(scm, lConstants));
     }
 
     public FollowerBuilder threeWheelIMULocalizer(

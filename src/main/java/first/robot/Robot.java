@@ -9,10 +9,12 @@ import com.pedropathing.ftc.SystemCoreMap;
 import com.revrobotics.spark.A301;
 import first.robot.components.DriveBase;
 import first.robot.helpers.DualA301Motor;
+import first.support.GoBildaPinpoint;
 import first.support.TunablePedroBot;
 import org.jspecify.annotations.Nullable;
 import org.wpilib.driverstation.Gamepad;
 import org.wpilib.framework.OpModeRobot;
+import org.wpilib.hardware.bus.I2C;
 import org.wpilib.hardware.hal.CANBusMap;
 import org.wpilib.hardware.imu.OnboardIMU;
 
@@ -40,6 +42,7 @@ public class Robot extends OpModeRobot implements SystemCoreMap, TunablePedroBot
             case REAR_RIGHT_ENCODER -> rearRight;
             // And the IMU...
             case IMU -> imu;
+            case GOBILDA_PINPOINT -> pinpoint;
             default -> null;
         };
     }
@@ -97,21 +100,23 @@ public class Robot extends OpModeRobot implements SystemCoreMap, TunablePedroBot
 
     public final Gamepad gamepad = new Gamepad(0);
     public final Gamepad gamepad2 = new Gamepad(1);
+
+    public final GoBildaPinpoint pinpoint = new GoBildaPinpoint(I2C.Port.PORT_0);
     public Follower follower = null;
 
     /**
      * This function is run when the robot is first started up and should be used for any
      * initialization code.
      */
-    public Robot() {}
+    public Robot() {
+        follower = DriveBase.getFollower(this);
+    }
 
     /**
      * This function is called exactly once when the DS first connects.
      */
     @Override
-    public void driverStationConnected() {
-        follower = DriveBase.getFollower(this);
-    }
+    public void driverStationConnected() {}
 
     /**
      * This function is called periodically anytime when no opmode is selected, including when the

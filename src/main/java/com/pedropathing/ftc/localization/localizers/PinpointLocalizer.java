@@ -1,17 +1,18 @@
 package com.pedropathing.ftc.localization.localizers;
 
 import com.pedropathing.ftc.PoseConverter;
+import com.pedropathing.ftc.SystemCoreMap;
 import com.pedropathing.ftc.localization.constants.PinpointConstants;
 import com.pedropathing.geometry.PedroCoordinates;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.localization.Localizer;
 import com.pedropathing.math.MathFunctions;
 import com.pedropathing.math.Vector;
-import com.pedropathing.util.NanoTimer;
-import first.support.GoBildaPinpointDriver;
+import first.support.GoBildaPinpoint;
 import java.util.Objects;
-import org.wpilib.units.DistanceUnit;
-import org.wpilib.units.Units;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.units.*;
+import org.wpilib.units.measure.Distance;
 
 /**
  * This is the Pinpoint class. This class extends the Localizer superclass and is a
@@ -25,7 +26,7 @@ import org.wpilib.units.Units;
  */
 public class PinpointLocalizer implements Localizer {
 
-    private final GoBildaPinpointDriver odo;
+    private final GoBildaPinpoint odo;
     private final PinpointConstants constants;
     private double previousHeading;
     private double totalHeading;
@@ -37,25 +38,21 @@ public class PinpointLocalizer implements Localizer {
      * This creates a new PinpointLocalizer from a HardwareMap, with a starting Pose at (0,0)
      * facing 0 heading.
      *
-     * @param pp the Pinpoint device
+     * @param scm the SystemCoreMap that will return the Pinpoint device
      */
-    public PinpointLocalizer(GoBildaPinpointDriver pp, PinpointConstants constants) {
-        this(pp, constants, new Pose());
+    public PinpointLocalizer(SystemCoreMap scm, PinpointConstants constants) {
+        this(scm, constants, new Pose());
     }
 
     /**
      * This creates a new PinpointLocalizer from a HardwareMap and a Pose, with the Pose
      * specifying the starting pose of the localizer.
      *
-     * @param pp the Pinpoint device
+     * @param scm          the SystemCoreMap that will return the Pinpoint device
      * @param setStartPose the Pose to start from
      */
-    public PinpointLocalizer(
-        GoBildaPinpointDriver pp,
-        PinpointConstants constants,
-        Pose setStartPose
-    ) {
-        odo = pp;
+    public PinpointLocalizer(SystemCoreMap scm, PinpointConstants constants, Pose setStartPose) {
+        odo = scm.getPinpoint();
         setOffsets(constants.forwardPodY, constants.strafePodX, constants.distanceUnit);
 
         if (constants.yawScalar.isPresent()) {
@@ -63,10 +60,7 @@ public class PinpointLocalizer implements Localizer {
         }
 
         if (constants.customEncoderResolution.isPresent()) {
-            odo.setEncoderResolution(
-                constants.customEncoderResolution.getAsDouble() /*,
-                constants.distanceUnit*/
-            );
+            odo.setEncoderResolution(constants.customEncoderResolution.getAsDouble());
         } else {
             odo.setEncoderResolution(constants.encoderResolution);
         }
@@ -162,11 +156,9 @@ public class PinpointLocalizer implements Localizer {
             ) * MathFunctions.getTurnDirection(previousHeading, currentPinpointPose.getHeading());
         previousHeading = currentPinpointPose.getHeading();
         currentVelocity = new Pose(
-            odo.getVelX(Units.Inch),
-            odo.getVelY(
-                /*Units.Inch*/
-            ) /*,
-            odo.getHeadingVelocity(AngleUnit.RADIANS.getUnnormalized())*/
+            odo.getVelX().in(constants.distanceUnit.per(Units.Second)),
+            odo.getVelY().in(constants.distanceUnit.per(Units.Second)),
+            odo.getVelHeading().in(Units.RadiansPerSecond)
         );
         pinpointPose = currentPinpointPose;
     }
@@ -184,6 +176,7 @@ public class PinpointLocalizer implements Localizer {
 
     /**
      * This returns the Y encoder value as none of the odometry tuners are required for this localizer
+     *
      * @return returns the Y encoder value
      */
     @Override
@@ -193,6 +186,7 @@ public class PinpointLocalizer implements Localizer {
 
     /**
      * This returns the X encoder value as none of the odometry tuners are required for this localizer
+     *
      * @return returns the X encoder value
      */
     @Override
@@ -202,6 +196,7 @@ public class PinpointLocalizer implements Localizer {
 
     /**
      * This returns either the factory tuned yaw scalar or the yaw scalar tuned by yourself.
+     *
      * @return returns the yaw scalar
      */
     @Override
@@ -211,12 +206,16 @@ public class PinpointLocalizer implements Localizer {
 
     /**
      * This sets the offsets and converts inches to millimeters
+     *
      * @param xOffset How far to the side from the center of the robot is the x-pod? Use positive values if it's to the left and negative if it's to the right.
      * @param yOffset How far forward from the center of the robot is the y-pod? Use positive values if it's forward and negative if it's to the back.
-     * @param unit The units that the measurements are given in
+     * @param unit    The units that the measurements are given in
      */
     private void setOffsets(double xOffset, double yOffset, DistanceUnit unit) {
-        odo.setOffsets(xOffset, yOffset /*, unit*/);
+        odo.setOffsets(
+            Distance.ofRelativeUnits(xOffset, unit),
+            Distance.ofRelativeUnits(yOffset, unit)
+        );
     }
 
     /**
@@ -229,7 +228,7 @@ public class PinpointLocalizer implements Localizer {
 
     @Override
     public double getIMUHeading() {
-        return Double.NaN;
+        return odo.getHeading().getRadians();
     }
 
     /**
@@ -272,22 +271,22 @@ public class PinpointLocalizer implements Localizer {
      *
      * @return returns the GoBildaPinpointDriver object used by this localizer
      */
-    public GoBildaPinpointDriver getPinpoint() {
+    public GoBildaPinpoint getPinpoint() {
         return odo;
     }
 
     @Override
     public void setX(double x) {
-        odo.setPosX(x /*, constants.distanceUnit*/);
+        odo.setPosX(Distance.ofBaseUnits(x, constants.distanceUnit));
     }
 
     @Override
     public void setY(double y) {
-        odo.setPosY(y /*, constants.distanceUnit*/);
+        odo.setPosY(Distance.ofBaseUnits(y, constants.distanceUnit));
     }
 
     @Override
     public void setHeading(double heading) {
-        odo.setHeading(heading /*, AngleUnit.RADIANS*/);
+        odo.setHeading(new Rotation2d(heading));
     }
 }

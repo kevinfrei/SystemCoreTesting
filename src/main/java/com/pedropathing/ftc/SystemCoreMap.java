@@ -3,6 +3,7 @@ package com.pedropathing.ftc;
 import com.pedropathing.ftc.drivetrains.SCMotor;
 import com.pedropathing.ftc.localization.*;
 import com.revrobotics.spark.A301;
+import first.support.GoBildaPinpoint;
 import org.jspecify.annotations.Nullable;
 import org.wpilib.hardware.expansionhub.ExpansionHubMotor;
 import org.wpilib.hardware.imu.OnboardIMU;
@@ -53,6 +54,8 @@ public interface SystemCoreMap {
         REAR_LEFT_ENCODER,
         // An IMU interface
         IMU,
+        // The GoBildaPinpoint I2C device
+        GOBILDA_PINPOINT,
     }
 
     /**
@@ -63,7 +66,8 @@ public interface SystemCoreMap {
      * - An object that implements the {@link SCMotor} interface
      * Encoders supported include:
      * - {@link Encoder}
-     * - {@link ExpansionHubMotor} because, well, that's how you get to those encoders...
+     * - {@link ExpansionHubMotor} because, well, that's how you get to those
+     * encoders...
      * - {@link A301} if you're using drive motors for odometry.
      * - An object that implements the {@link SCEncoder} interface
      * IMUs supported include:
@@ -78,7 +82,8 @@ public interface SystemCoreMap {
 
     /**
      * This is the helper to get a particular Motor object, by calling
-     * {@link #getHardware} getHardware} with the specific hardware 'name' requested.
+     * {@link #getHardware} getHardware} with the specific hardware 'name'
+     * requested.
      *
      * @param nm One of the FL/FR/RR/FL motors
      * @return an SCMotor interface for the motor requested, or null
@@ -169,6 +174,19 @@ public interface SystemCoreMap {
             default -> throw new IllegalArgumentException(
                 "Unknown IMU type returned from getHardware(HardwareNames.IMU)"
             );
+        }
+    }
+
+    @Nullable
+    default GoBildaPinpoint getPinpoint() {
+        Object o = getHardware(HardwareName.GOBILDA_PINPOINT);
+        if (o != null && o instanceof GoBildaPinpoint) {
+            return (GoBildaPinpoint) o;
+        }
+        if (failOnNull()) {
+            throw new IllegalArgumentException("No Pinpoint found!");
+        } else {
+            return null;
         }
     }
 }

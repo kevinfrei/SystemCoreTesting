@@ -1,6 +1,6 @@
 package com.pedropathing.ftc.localization.constants;
 
-import first.support.GoBildaPinpointDriver;
+import first.support.GoBildaPinpoint;
 import java.util.OptionalDouble;
 import org.wpilib.units.DistanceUnit;
 import org.wpilib.units.Units;
@@ -26,30 +26,26 @@ public class PinpointConstants {
      * Default Value: DistanceUnit.INCH */
     public DistanceUnit distanceUnit = Units.Inch;
 
-    /** The name of the Pinpoint in the hardware map (name of the I2C port it is plugged into)
-     * Default Value: "pinpoint" */
-    public String hardwareMapName = "pinpoint";
-
     /** Custom Yaw Scalar for the Pinpoint (overrides the calibration of the Pinpoint) */
     public OptionalDouble yawScalar = OptionalDouble.empty();
 
     /** The Encoder Resolution for the Pinpoint. Used by default, but can be changed to a custom resolution.
      * Default Value: GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD */
-    public GoBildaPinpointDriver.GoBildaOdometryPods encoderResolution =
-        GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD;
+    public GoBildaPinpoint.GoBildaOdometryPods encoderResolution =
+        GoBildaPinpoint.GoBildaOdometryPods.goBILDA_4_BAR_POD;
 
     /** The Encoder Resolution for the Pinpoint. Unused by default, but can be used if you want to use a custom encoder resolution. */
     public OptionalDouble customEncoderResolution = OptionalDouble.empty();
 
     /** The Encoder Direction for the Forward Encoder (Deadwheel)
      * Default Value: GoBildaPinpointDriver.EncoderDirection.REVERSED */
-    public GoBildaPinpointDriver.EncoderDirection forwardEncoderDirection =
-        GoBildaPinpointDriver.EncoderDirection.REVERSED;
+    public GoBildaPinpoint.EncoderDirection forwardEncoderDirection =
+        GoBildaPinpoint.EncoderDirection.REVERSED;
 
     /** The Encoder Direction for the Strafe Encoder (Deadwheel)
      * Default Value: GoBildaPinpointDriver.EncoderDirection.FORWARD */
-    public GoBildaPinpointDriver.EncoderDirection strafeEncoderDirection =
-        GoBildaPinpointDriver.EncoderDirection.FORWARD;
+    public GoBildaPinpoint.EncoderDirection strafeEncoderDirection =
+        GoBildaPinpoint.EncoderDirection.FORWARD;
 
     /**
      * This creates a new PinpointConstants with default values.
@@ -73,18 +69,13 @@ public class PinpointConstants {
         return this;
     }
 
-    public PinpointConstants hardwareMapName(String hardwareMapName) {
-        this.hardwareMapName = hardwareMapName;
-        return this;
-    }
-
     public PinpointConstants yawScalar(double yawScalar) {
         this.yawScalar = OptionalDouble.of(yawScalar);
         return this;
     }
 
     public PinpointConstants encoderResolution(
-        GoBildaPinpointDriver.GoBildaOdometryPods encoderResolution
+        GoBildaPinpoint.GoBildaOdometryPods encoderResolution
     ) {
         this.encoderResolution = encoderResolution;
         return this;
@@ -96,14 +87,14 @@ public class PinpointConstants {
     }
 
     public PinpointConstants forwardEncoderDirection(
-        GoBildaPinpointDriver.EncoderDirection forwardEncoderDirection
+        GoBildaPinpoint.EncoderDirection forwardEncoderDirection
     ) {
         this.forwardEncoderDirection = forwardEncoderDirection;
         return this;
     }
 
     public PinpointConstants strafeEncoderDirection(
-        GoBildaPinpointDriver.EncoderDirection strafeEncoderDirection
+        GoBildaPinpoint.EncoderDirection strafeEncoderDirection
     ) {
         this.strafeEncoderDirection = strafeEncoderDirection;
         return this;
@@ -113,11 +104,10 @@ public class PinpointConstants {
         forwardPodY = 1;
         strafePodX = -2.5;
         distanceUnit = Units.Inch;
-        hardwareMapName = "pinpoint";
         yawScalar = OptionalDouble.empty();
-        encoderResolution = GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD;
+        encoderResolution = GoBildaPinpoint.GoBildaOdometryPods.goBILDA_4_BAR_POD;
         customEncoderResolution = OptionalDouble.empty();
-        forwardEncoderDirection = GoBildaPinpointDriver.EncoderDirection.REVERSED;
-        strafeEncoderDirection = GoBildaPinpointDriver.EncoderDirection.FORWARD;
+        forwardEncoderDirection = GoBildaPinpoint.EncoderDirection.REVERSED;
+        strafeEncoderDirection = GoBildaPinpoint.EncoderDirection.FORWARD;
     }
 }

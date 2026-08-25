@@ -1,12 +1,12 @@
-package first.support;
+package first.robot.components;
 
 import static com.pedropathing.math.MathFunctions.quadraticFit;
 
-// import static first.support.Tuning.changes;
-// import static first.support.Tuning.drawCurrent;
-// import static first.support.Tuning.drawCurrentAndHistory;
-// import static first.support.Tuning.follower;
-// import static first.support.Tuning.stopRobot;
+// import static first.robot.components.Tuning.changes;
+// import static first.robot.components.Tuning.drawCurrent;
+// import static first.robot.components.Tuning.drawCurrentAndHistory;
+// import static first.robot.components.Tuning.follower;
+// import static first.robot.components.Tuning.stopRobot;
 
 // import com.bylazar.configurables.PanelsConfigurables;
 // import com.bylazar.configurables.annotations.Configurable;
@@ -24,6 +24,8 @@ import com.pedropathing.paths.*;
 import com.pedropathing.util.*;
 import first.robot.Robot;
 import first.robot.helpers.ElapsedTime;
+import first.support.Telemetry;
+import first.support.TunablePedroBot;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.text.Style;
