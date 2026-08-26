@@ -19,7 +19,9 @@ import com.pedropathing.geometry.Pose;
 import com.pedropathing.localization.Localizer;
 import com.pedropathing.paths.PathConstraints;
 import first.robot.Robot;
+import first.robot.components.DriveBase.Speed;
 import first.support.GoBildaPinpoint;
+import first.support.GoBildaPinpoint.DeviceStatus;
 import first.support.GoBildaPinpoint.GoBildaOdometryPods;
 import javax.management.InvalidApplicationException;
 import org.wpilib.command2.SubsystemBase;
@@ -27,6 +29,8 @@ import org.wpilib.driverstation.Gamepad;
 import org.wpilib.hardware.hal.CANBusMap;
 import org.wpilib.hardware.hal.util.AllocationException;
 import org.wpilib.hardware.imu.OnboardIMU;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.opmode.OpMode;
 import org.wpilib.opmode.Teleop;
 import org.wpilib.opmode.Utility;
@@ -37,10 +41,40 @@ public class DriveBase {
     public static class Config {
 
         /* HARDWARE CONFIGURATION */
+        // Motors:
         public static boolean FL_INVERTED = true;
         public static boolean FR_INVERTED = false;
         public static boolean RL_INVERTED = true;
         public static boolean RR_INVERTED = false;
+
+        // PinPoint Odo pods:
+        public static double fwdMultiplier_pp = 1.0;
+        public static double latMultiplier_pp = 1.0;
+        public static double rotMulitiplier_pp = 1.0;
+        public static double fwdPodDirection_pp = SCEncoder.REVERSE;
+        public static double latPodDirection_pp = SCEncoder.REVERSE;
+        public static double fwdPodTicksToInches_pp = 1.0; // 2000 / ((Math.PI * 32) / 25.4);
+        public static double latPodTicksToInches_pp = 1.0; // 2000 / ((Math.PI * 32) / 25.4);
+        public static double fwdPodYOffset_pp = 0; // Use the offset tuner [-2.5]
+        public static double latPodXOffset_pp = 0; // Use the offset tuner [0.25]
+
+        // 2 dead wheel odo:
+        public static OnboardIMU.MountOrientation imuOrientation_2w =
+            OnboardIMU.MountOrientation.LANDSCAPE;
+        public static double fwdMultiplier_2w = 1.0;
+        public static double latMultiplier_2w = 1.0;
+        public static double rotMulitiplier_2w = 1.0;
+        public static double fwdPodDirection_2w = SCEncoder.REVERSE;
+        public static double latPodDirection_2w = SCEncoder.REVERSE;
+        public static double fwdPodTicksToInches_2w = 2000 / ((Math.PI * 32) / 25.4);
+        public static double latPodTicksToInches_2w = 2000 / ((Math.PI * 32) / 25.4);
+        public static double fwdPodYOffset_2w = 0; // Use the offset tuner [-2.5]
+        public static double latPodXOffset_2w = 0; // Use the offset tuner [0.25]
+
+        // Motor odometry:
+        public static double fwdTicksToInches_m = 135;
+        public static double latTicksToInches_m = 150;
+        public static double turnTicksToInches_m = 100;
 
         /* SOFTWARE CONFIGURATION */
         // Max power scaling for translational driving:
@@ -148,7 +182,7 @@ public class DriveBase {
         }
 
         public static Localizer getLocalizer(SystemCoreMap scm) {
-            return switch (Localization.WhichLocalizer) {
+            Localizer loc = switch (Localization.WhichLocalizer) {
                 case Localization.LocalizerSelection.USE_PINPOINT -> new PinpointLocalizer(
                     scm,
                     Localization.getPinpointConstants()
@@ -163,31 +197,10 @@ public class DriveBase {
                 );
                 default -> null;
             };
+            return loc;
         }
 
         public static class Localization {
-
-            public static class MotorLocConfig {
-
-                public static double fwdTicksToInches = 135;
-                public static double latTicksToInches = 150;
-                public static double turnTicksToInches = 100;
-            }
-
-            public static class TwoWheelConfig {
-
-                public static String ForwardPodName = "odofb";
-                public static String StrafePodName = "odostrafe";
-                public static String IMUName = "imu";
-                public static OnboardIMU.MountOrientation orientation =
-                    OnboardIMU.MountOrientation.LANDSCAPE;
-                public static double ForwardPodDirection = SCEncoder.FORWARD;
-                public static double StrafePodDirection = SCEncoder.REVERSE;
-                public static double ForwardPodTicksToInches = 2000 / ((Math.PI * 32) / 25.4);
-                public static double StrafePodTicksToInches = 2000 / ((Math.PI * 32) / 25.4);
-                public static double ForwardPodY = 0; // Use the offset tuner [-2.5]
-                public static double StrafePodX = 0; // Use the offset tuner [0.25]
-            }
 
             public enum LocalizerSelection {
                 USE_MOTORS,
@@ -204,35 +217,35 @@ public class DriveBase {
                     .leftRearEncoderDirection(SCEncoder.FORWARD)
                     .rightFrontEncoderDirection(SCEncoder.FORWARD)
                     .rightRearEncoderDirection(SCEncoder.FORWARD)
-                    .forwardTicksToInches(MotorLocConfig.fwdTicksToInches)
-                    .strafeTicksToInches(MotorLocConfig.latTicksToInches)
-                    .turnTicksToInches(MotorLocConfig.turnTicksToInches)
+                    .forwardTicksToInches(fwdTicksToInches_m)
+                    .strafeTicksToInches(latTicksToInches_m)
+                    .turnTicksToInches(turnTicksToInches_m)
                     .robotLength(botLength)
                     .robotWidth(botWidth);
             }
 
             public static TwoWheelConstants getTwoWheelConstants() {
                 return new TwoWheelConstants()
-                    .forwardEncoderDirection(TwoWheelConfig.ForwardPodDirection)
-                    .forwardTicksToInches(TwoWheelConfig.ForwardPodTicksToInches)
-                    .forwardPodY(TwoWheelConfig.ForwardPodY)
-                    .strafeEncoderDirection(TwoWheelConfig.StrafePodDirection)
-                    .strafeTicksToInches(TwoWheelConfig.StrafePodTicksToInches)
-                    .strafePodX(TwoWheelConfig.StrafePodX)
-                    .IMU_Orientation(TwoWheelConfig.orientation);
+                    .forwardEncoderDirection(fwdPodDirection_2w)
+                    .forwardTicksToInches(fwdPodTicksToInches_2w)
+                    .forwardPodY(fwdPodYOffset_2w)
+                    .strafeEncoderDirection(latPodDirection_2w)
+                    .strafeTicksToInches(latPodTicksToInches_2w)
+                    .strafePodX(latPodXOffset_2w)
+                    .IMU_Orientation(imuOrientation_2w);
             }
 
             public static PinpointConstants getPinpointConstants() {
                 return new PinpointConstants()
-                    .forwardPodY(TwoWheelConfig.ForwardPodY)
-                    .strafePodX(TwoWheelConfig.StrafePodX)
+                    .forwardPodY(fwdPodYOffset_pp)
+                    .strafePodX(latPodXOffset_pp)
                     .strafeEncoderDirection(
-                        TwoWheelConfig.StrafePodDirection == SCEncoder.REVERSE
+                        latPodDirection_pp == SCEncoder.REVERSE
                             ? GoBildaPinpoint.EncoderDirection.REVERSED
                             : GoBildaPinpoint.EncoderDirection.FORWARD
                     )
                     .forwardEncoderDirection(
-                        TwoWheelConfig.ForwardPodDirection == SCEncoder.REVERSE
+                        fwdPodDirection_pp == SCEncoder.REVERSE
                             ? GoBildaPinpoint.EncoderDirection.REVERSED
                             : GoBildaPinpoint.EncoderDirection.FORWARD
                     )
@@ -366,26 +379,93 @@ public class DriveBase {
         }
     }
 
+    @Utility(group = "DBComponent")
+    public static class PinpointTest implements OpMode {
+
+        GoBildaPinpoint odo;
+        boolean started = false;
+
+        public PinpointTest(Robot r) {
+            odo = r.pinpoint;
+            odo.resetPosAndIMU();
+        }
+
+        public void start() {
+            started = true;
+            odo.resetPosAndIMU();
+            odo.setPosition(new Pose2d(0, 0, new Rotation2d(0)));
+        }
+
+        public void periodic() {
+            if (!started) {
+                return;
+            }
+            odo.update();
+            DeviceStatus status = odo.getDeviceStatus();
+            switch (status) {
+                case READY: {
+                    int odoLoopTime = odo.getLoopTime();
+                    Pose2d pose = odo.getPosition();
+                    System.out.printf(
+                        "x::%.1f y::%.1f h:%.1f t:%d%n",
+                        pose.getX(),
+                        pose.getY(),
+                        pose.getRotation().getDegrees(),
+                        odoLoopTime
+                    );
+                    break;
+                }
+                case NOT_READY:
+                    System.out.println("ODO: Not Ready");
+                    break;
+                case CALIBRATING:
+                    System.out.println("ODO: Calibrating");
+                    break;
+                case FAULT_X_POD_NOT_DETECTED:
+                    System.out.println("ODO: X pod not detected");
+                    break;
+                case FAULT_Y_POD_NOT_DETECTED:
+                    System.out.println("ODO: Y pod not detected");
+                    break;
+                case FAULT_NO_PODS_DETECTED:
+                    System.out.println("ODO: No Pods detecte");
+                    break;
+                case FAULT_IMU_RUNAWAY:
+                    System.out.println("ODO: IMU Runaway fault");
+                    break;
+                case FAULT_BAD_READ:
+                    System.out.println("ODO: Bad Read (Is the device connected?)");
+                    break;
+            }
+        }
+
+        public void end() {
+            started = false;
+        }
+    }
+
     @Teleop(name = "Pedro Tele", group = "DBComponent")
     public static class PedroValidation implements OpMode {
 
         Follower f;
+        GoBildaPinpoint odo;
         Gamepad g;
-        boolean actuallyStarted;
+        boolean started;
 
         public PedroValidation(Robot robot) {
             f = robot.follower;
             g = robot.gamepad;
-            actuallyStarted = false;
+            odo = robot.pinpoint;
+            started = false;
         }
 
         public void start() {
             f.startTeleOpDrive(false);
-            actuallyStarted = true;
+            started = true;
         }
 
         public void end() {
-            actuallyStarted = false;
+            started = false;
         }
 
         Speed speed = Speed.Normal;
@@ -428,14 +508,15 @@ public class DriveBase {
 
         public void periodic() {
             lastCount = (lastCount + 1) & mask;
-            if (!actuallyStarted) {
+            if (!started) {
                 return;
             }
+            odo.update();
             f.update();
             double fwd = fwdScale(deadZone(-g.getLeftY()));
             double strafe = strafeScale(deadZone(-g.getLeftX()));
             double rotate = rotateScale(deadZone(-g.getRightX()));
-            f.setTeleOpDrive(fwd, strafe, rotate);
+            f.setTeleOpDrive(fwd, strafe, rotate, false);
             if (lastCount == 0) {
                 Pose p = f.getPose();
                 System.out.printf(

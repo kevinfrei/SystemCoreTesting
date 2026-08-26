@@ -15,9 +15,12 @@ import org.wpilib.units.*;
 import org.wpilib.units.measure.Distance;
 
 /**
- * This is the Pinpoint class. This class extends the Localizer superclass and is a
- * localizer that uses the two wheel odometry set up with the IMU to have more accurate heading
- * readings. The diagram below, which is modified from Road Runner, shows a typical set up.
+ * This is the Pinpoint class. This class extends the Localizer superclass and
+ * is a
+ * localizer that uses the two wheel odometry set up with the IMU to have more
+ * accurate heading
+ * readings. The diagram below, which is modified from Road Runner, shows a
+ * typical set up.
  *
  * @author Logan Nash
  * @author Havish Sripada 12808 - RevAmped Robotics
@@ -35,7 +38,8 @@ public class PinpointLocalizer implements Localizer {
     private Pose pinpointPose;
 
     /**
-     * This creates a new PinpointLocalizer from a HardwareMap, with a starting Pose at (0,0)
+     * This creates a new PinpointLocalizer from a HardwareMap, with a starting Pose
+     * at (0,0)
      * facing 0 heading.
      *
      * @param scm the SystemCoreMap that will return the Pinpoint device
@@ -45,7 +49,8 @@ public class PinpointLocalizer implements Localizer {
     }
 
     /**
-     * This creates a new PinpointLocalizer from a HardwareMap and a Pose, with the Pose
+     * This creates a new PinpointLocalizer from a HardwareMap and a Pose, with the
+     * Pose
      * specifying the starting pose of the localizer.
      *
      * @param scm          the SystemCoreMap that will return the Pinpoint device
@@ -109,7 +114,8 @@ public class PinpointLocalizer implements Localizer {
     }
 
     /**
-     * This sets the start pose. This alters the start position even if it is already set, compensating as needed.
+     * This sets the start pose. This alters the start position even if it is
+     * already set, compensating as needed.
      *
      * @param setStart the new start pose
      */
@@ -126,7 +132,8 @@ public class PinpointLocalizer implements Localizer {
     }
 
     /**
-     * This sets the current pose estimate. Changing this should just change the robot's current
+     * This sets the current pose estimate. Changing this should just change the
+     * robot's current
      * pose estimate, not anything to do with the start pose.
      *
      * @param setPose the new current pose estimate
@@ -139,7 +146,8 @@ public class PinpointLocalizer implements Localizer {
     }
 
     /**
-     * This updates the total heading of the robot. The Pinpoint handles all other updates itself.
+     * This updates the total heading of the robot. The Pinpoint handles all other
+     * updates itself.
      */
     @Override
     public void update() {
@@ -148,7 +156,8 @@ public class PinpointLocalizer implements Localizer {
             odo.getPosition(),
             PedroCoordinates.INSTANCE
         );
-        // Thank you to GoldenElf58 of FTC Team 16657 for spotting a bug here; it was resolved by adding the turn direction.
+        // Thank you to GoldenElf58 of FTC Team 16657 for spotting a bug here; it was
+        // resolved by adding the turn direction.
         totalHeading +=
             MathFunctions.getSmallestAngleDifference(
                 currentPinpointPose.getHeading(),
@@ -164,8 +173,10 @@ public class PinpointLocalizer implements Localizer {
     }
 
     /**
-     * This returns how far the robot has turned in radians, in a number not clamped between 0 and
-     * 2 * pi radians. This is used for some tuning things and nothing actually within the following.
+     * This returns how far the robot has turned in radians, in a number not clamped
+     * between 0 and
+     * 2 * pi radians. This is used for some tuning things and nothing actually
+     * within the following.
      *
      * @return returns how far the robot has turned in total, in radians.
      */
@@ -175,7 +186,8 @@ public class PinpointLocalizer implements Localizer {
     }
 
     /**
-     * This returns the Y encoder value as none of the odometry tuners are required for this localizer
+     * This returns the Y encoder value as none of the odometry tuners are required
+     * for this localizer
      *
      * @return returns the Y encoder value
      */
@@ -185,7 +197,8 @@ public class PinpointLocalizer implements Localizer {
     }
 
     /**
-     * This returns the X encoder value as none of the odometry tuners are required for this localizer
+     * This returns the X encoder value as none of the odometry tuners are required
+     * for this localizer
      *
      * @return returns the X encoder value
      */
@@ -195,7 +208,8 @@ public class PinpointLocalizer implements Localizer {
     }
 
     /**
-     * This returns either the factory tuned yaw scalar or the yaw scalar tuned by yourself.
+     * This returns either the factory tuned yaw scalar or the yaw scalar tuned by
+     * yourself.
      *
      * @return returns the yaw scalar
      */
@@ -207,8 +221,12 @@ public class PinpointLocalizer implements Localizer {
     /**
      * This sets the offsets and converts inches to millimeters
      *
-     * @param xOffset How far to the side from the center of the robot is the x-pod? Use positive values if it's to the left and negative if it's to the right.
-     * @param yOffset How far forward from the center of the robot is the y-pod? Use positive values if it's forward and negative if it's to the back.
+     * @param xOffset How far to the side from the center of the robot is the x-pod?
+     *                Use positive values if it's to the left and negative if it's
+     *                to the right.
+     * @param yOffset How far forward from the center of the robot is the y-pod? Use
+     *                positive values if it's forward and negative if it's to the
+     *                back.
      * @param unit    The units that the measurements are given in
      */
     private void setOffsets(double xOffset, double yOffset, DistanceUnit unit) {
@@ -245,7 +263,8 @@ public class PinpointLocalizer implements Localizer {
     }
 
     /**
-     * This recalibrates the Pinpoint. It will take 0.25 seconds to recalibrate, and the robot must be still
+     * This recalibrates the Pinpoint. It will take 0.25 seconds to recalibrate, and
+     * the robot must be still
      */
     public void recalibrate() {
         odo.recalibrateIMU();
@@ -266,7 +285,8 @@ public class PinpointLocalizer implements Localizer {
     }
 
     /**
-     * This returns the GoBildaPinpointDriver object used by this localizer, in case you want to
+     * This returns the GoBildaPinpointDriver object used by this localizer, in case
+     * you want to
      * access any of its methods directly.
      *
      * @return returns the GoBildaPinpointDriver object used by this localizer

@@ -10,6 +10,7 @@ import com.revrobotics.spark.A301;
 import first.robot.components.DriveBase;
 import first.robot.helpers.DualA301Motor;
 import first.support.GoBildaPinpoint;
+import first.support.GoBildaPinpoint.GoBildaOdometryPods;
 import first.support.TunablePedroBot;
 import org.jspecify.annotations.Nullable;
 import org.wpilib.driverstation.Gamepad;
@@ -109,6 +110,8 @@ public class Robot extends OpModeRobot implements SystemCoreMap, TunablePedroBot
      * initialization code.
      */
     public Robot() {
+        pinpoint.resetPosAndIMU();
+        pinpoint.setEncoderResolution(GoBildaOdometryPods.goBILDA_4_BAR_POD);
         follower = DriveBase.getFollower(this);
     }
 

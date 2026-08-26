@@ -1270,7 +1270,7 @@ public class GoBildaPinpoint {
         if (registerNotInBulkRead(Register.H_ORIENTATION)) {
             readRegister(Register.H_ORIENTATION);
         }
-        return new Pose2d(xPosition, yPosition, getHeading());
+        return new Pose2d(Millimeters.of(xPosition), Millimeters.of(yPosition), getHeading());
     }
 
     /**

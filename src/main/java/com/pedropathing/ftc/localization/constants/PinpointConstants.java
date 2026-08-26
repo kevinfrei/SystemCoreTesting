@@ -15,12 +15,12 @@ public class PinpointConstants {
     /** The Y Offset of the Forward Encoder (Deadwheel) from the center of the robot in DistanceUnit
      * @see #distanceUnit
      * Default Value: 1 */
-    public double forwardPodY = 1;
+    public double forwardPodY = 0;
 
     /** The X Offset of the Strafe Encoder (Deadwheel) from the center of the robot in DistanceUnit
      * @see #distanceUnit
      * Default Value: -2.5 */
-    public double strafePodX = -2.5;
+    public double strafePodX = 0;
 
     /** The Unit of Distance that the Pinpoint uses to measure distance
      * Default Value: DistanceUnit.INCH */
@@ -101,8 +101,8 @@ public class PinpointConstants {
     }
 
     public void defaults() {
-        forwardPodY = 1;
-        strafePodX = -2.5;
+        forwardPodY = 0;
+        strafePodX = 0;
         distanceUnit = Units.Inch;
         yawScalar = OptionalDouble.empty();
         encoderResolution = GoBildaPinpoint.GoBildaOdometryPods.goBILDA_4_BAR_POD;
