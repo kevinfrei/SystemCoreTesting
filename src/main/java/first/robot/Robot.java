@@ -101,7 +101,7 @@ public class Robot extends OpModeRobot implements SystemCoreMap, TunablePedroBot
     public final Gamepad gamepad = new Gamepad(0);
     public final Gamepad gamepad2 = new Gamepad(1);
 
-    public final GoBildaPinpoint pinpoint = new GoBildaPinpoint(I2C.Port.PORT_0);
+    public final GoBildaPinpoint pinpoint = new GoBildaPinpoint(I2C.Port.PORT_1);
     public Follower follower = null;
 
     /**

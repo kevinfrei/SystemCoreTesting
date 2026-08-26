@@ -55,6 +55,7 @@ public class DriveBase {
         public static double TURBO_TURN = 1.0;
 
         public static double STICK_DEAD_ZONE = 0.05;
+        public static double DRIVE_STICK_CURVE = 3.0;
 
         /**** Stuff for the PedroPathing follower ****/
 
@@ -405,16 +406,21 @@ public class DriveBase {
             };
         }
 
+        // Curve the sticks, so that you have more precision at the low end
+        protected double curve(double val) {
+            return Math.copySign(Math.pow(Math.abs(val), Config.DRIVE_STICK_CURVE), val);
+        }
+
         protected double fwdScale(double val) {
-            return Math.copySign(val * val, val) * getSpeedMult();
+            return curve(val) * getSpeedMult();
         }
 
         protected double strafeScale(double val) {
-            return Math.copySign(val * val, val) * getSpeedMult();
+            return curve(val) * getSpeedMult();
         }
 
         protected double rotateScale(double val) {
-            return Math.copySign(val * val, val) * getTurnMult();
+            return curve(val) * getTurnMult();
         }
 
         int mask = 127;
@@ -426,10 +432,10 @@ public class DriveBase {
                 return;
             }
             f.update();
-            double fwd = deadZone(-g.getLeftY());
-            double strafe = deadZone(-g.getLeftX());
-            double rotate = deadZone(-g.getRightX());
-            f.setTeleOpDrive(fwdScale(fwd), strafeScale(strafe), rotateScale(rotate));
+            double fwd = fwdScale(deadZone(-g.getLeftY()));
+            double strafe = strafeScale(deadZone(-g.getLeftX()));
+            double rotate = rotateScale(deadZone(-g.getRightX()));
+            f.setTeleOpDrive(fwd, strafe, rotate);
             if (lastCount == 0) {
                 Pose p = f.getPose();
                 System.out.printf(
@@ -438,6 +444,7 @@ public class DriveBase {
                     p.getY(),
                     Math.toDegrees(p.getHeading())
                 );
+                System.out.printf("f:%.3f s:%.3f r:%.3f%n", fwd, strafe, rotate);
             }
         }
     }
